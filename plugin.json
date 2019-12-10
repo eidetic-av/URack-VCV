@@ -1,0 +1,16 @@
+{
+  "slug": "UnityCom",
+  "name": "UnityCom",
+  "version": "0.0.1",
+  "license": "proprietary",
+  "brand": "Eidetic",
+  "author": "Matt Hughes",
+  "authorEmail": "matt.hughes@live.com",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": []
+}
