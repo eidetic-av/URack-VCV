@@ -1,10 +1,10 @@
 {
-  "slug": "UnityCom",
-  "name": "UnityCom",
-  "version": "0.0.1",
-  "license": "proprietary",
-  "brand": "Eidetic",
-  "author": "Matt Hughes",
+  "slug": "Eidetic-URack",
+  "name": "URack",
+  "version": "1.0.0",
+  "license": "MIT",
+  "brand": "URack",
+  "author": "Eidetic",
   "authorEmail": "matt.hughes@live.com",
   "authorUrl": "",
   "pluginUrl": "",
@@ -12,5 +12,12 @@
   "sourceUrl": "",
   "donateUrl": "",
   "changelogUrl": "",
-  "modules": []
+  "modules": [
+    {
+      "slug": "MyModule",
+      "name": "MyModule",
+      "description": "",
+      "tags": []
+    }
+  ]
 }
