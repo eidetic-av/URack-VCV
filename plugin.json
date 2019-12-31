@@ -14,8 +14,8 @@
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "MyModule",
-      "name": "MyModule",
+      "slug": "Arena",
+      "name": "Arena",
       "description": "",
       "tags": []
     }

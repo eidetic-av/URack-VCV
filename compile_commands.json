@@ -17,58 +17,10 @@
             "-Wno-unused-parameter",
             "-DARCH_LIN",
             "-o",
-            "build/src/MyModule.cpp.o",
-            "src/MyModule.cpp"
-        ],
-        "directory": "/eidetic/Rack/plugins/UnityCom",
-        "file": "src/MyModule.cpp"
-    },
-    {
-        "arguments": [
-            "g++",
-            "-c",
-            "-std=c++11",
-            "-Wsuggest-override",
-            "-fPIC",
-            "-I../../include",
-            "-I../../dep/include",
-            "-g",
-            "-O3",
-            "-march=nocona",
-            "-funsafe-math-optimizations",
-            "-Wall",
-            "-Wextra",
-            "-Wno-unused-parameter",
-            "-DARCH_LIN",
-            "-o",
             "build/src/URack.cpp.o",
             "src/URack.cpp"
         ],
-        "directory": "/eidetic/Rack/plugins/UnityCom",
+        "directory": "/eidetic/Rack/plugins/URack",
         "file": "src/URack.cpp"
-    },
-    {
-        "arguments": [
-            "g++",
-            "-c",
-            "-std=c++11",
-            "-Wsuggest-override",
-            "-fPIC",
-            "-I../../include",
-            "-I../../dep/include",
-            "-g",
-            "-O3",
-            "-march=nocona",
-            "-funsafe-math-optimizations",
-            "-Wall",
-            "-Wextra",
-            "-Wno-unused-parameter",
-            "-DARCH_LIN",
-            "-o",
-            "build/src/plugin.cpp.o",
-            "src/plugin.cpp"
-        ],
-        "directory": "/eidetic/Rack/plugins/UnityCom",
-        "file": "src/plugin.cpp"
     }
 ]

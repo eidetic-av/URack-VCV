@@ -2,12 +2,7 @@
 #include "../lib/oscpack/osc/OscOutboundPacketStream.h"
 #include "plugin.hpp"
 
-#define ADDRESS "10.0.0.2"
-#define PORT 54321
-
-#define OUTPUT_BUFFER_SIZE 1024
-
-struct MyModule : Module {
+struct Arena : Module {
 	enum ParamIds { PITCH_PARAM, NUM_PARAMS };
 	enum InputIds { PITCH_INPUT, NUM_INPUTS };
 	enum OutputIds { SINE_OUTPUT, NUM_OUTPUTS };
@@ -18,26 +13,12 @@ struct MyModule : Module {
 
 	UdpTransmitSocket *transmitSocket;
 
-	MyModule() {
+	Arena() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
-
-		transmitSocket = new UdpTransmitSocket(IpEndpointName(ADDRESS, PORT));
-
-		char buffer[OUTPUT_BUFFER_SIZE];
-		osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
-		p << osc::BeginMessage("/MyModule/0/instantiate") << osc::EndMessage;
-		transmitSocket->Send(p.Data(), p.Size());
 	}
 
-	~MyModule() {
-		char buffer[OUTPUT_BUFFER_SIZE];
-		osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
-		p << osc::BeginMessage("/MyModule/0/destroy") << osc::EndMessage;
-		transmitSocket->Send(p.Data(), p.Size());
-		transmitSocket->Connect(IpEndpointName(8080));
-		delete transmitSocket;
-	}
+	~Arena() {}
 
 	float lastPitch = 0.f;
 
@@ -46,14 +27,6 @@ struct MyModule : Module {
 		float pitch = params[PITCH_PARAM].getValue();
 		pitch += inputs[PITCH_INPUT].getVoltage();
 		pitch = clamp(pitch, -5.f, 5.f);
-
-		if (pitch != lastPitch) {
-			char buffer[OUTPUT_BUFFER_SIZE];
-			osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
-			p << osc::BeginMessage("/MyModule/0/pitch") << pitch
-				<< osc::EndMessage;
-			transmitSocket->Send(p.Data(), p.Size());
-		}
 
 		lastPitch = pitch;
 
@@ -78,8 +51,8 @@ struct MyModule : Module {
 	}
 };
 
-struct MyModuleWidget : ModuleWidget {
-	MyModuleWidget(MyModule *module) {
+struct ArenaWidget : ModuleWidget {
+	ArenaWidget(Arena *module) {
 		setModule(module);
 		setPanel(APP->window->loadSvg(
 					asset::plugin(pluginInstance, "res/MyModule.svg")));
@@ -94,16 +67,16 @@ struct MyModuleWidget : ModuleWidget {
 						RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(15.24, 46.063)), module, MyModule::PITCH_PARAM));
+					mm2px(Vec(15.24, 46.063)), module, Arena::PITCH_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(15.24, 77.478)), module, MyModule::PITCH_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 77.478)),
+					module, Arena::PITCH_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(
-					mm2px(Vec(15.24, 108.713)), module, MyModule::SINE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 108.713)),
+					module, Arena::SINE_OUTPUT));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(
-					mm2px(Vec(15.24, 25.81)), module, MyModule::BLINK_LIGHT));
+					mm2px(Vec(15.24, 25.81)), module, Arena::BLINK_LIGHT));
 
 		// testPort = new PointCloudPortWidget();
 		// testPort->setSvg(APP->window->loadSvg(asset::system("res/ComponentLibrary/PJ301M.svg")));
@@ -111,4 +84,4 @@ struct MyModuleWidget : ModuleWidget {
 	}
 };
 
-Model *modelMyModule = createModel<MyModule, MyModuleWidget>("MyModule");
+Model *modelArena = createModel<Arena, ArenaWidget>("Arena");

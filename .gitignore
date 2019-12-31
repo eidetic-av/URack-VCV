@@ -4,5 +4,6 @@
 /plugin.dylib
 /plugin.dll
 .DS_Store
+.clangd
 .vimrc
 .ycm_extra_conf.py
