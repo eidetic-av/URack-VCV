@@ -25,4 +25,14 @@ void Dispatcher::create() {
 	DEBUG("%s", "Constructed a dispatcher instance");
 }
 
+void Dispatcher::send(int id) {
+	char buffer[UDP_BUFFER_SIZE];
+	osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+	p << osc::BeginMessage("/dispatcher/message") << id << osc::EndMessage;
+
+	for (auto& socket : transmitSockets) {
+		socket->Send(p.Data(), p.Size());
+	}
+}
+
 }  // namespace URack

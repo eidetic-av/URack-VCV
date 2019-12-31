@@ -1,5 +1,6 @@
 #include "../lib/oscpack/ip/UdpSocket.h"
 #include "../lib/oscpack/osc/OscOutboundPacketStream.h"
+#include "URack.hpp"
 #include "plugin.hpp"
 
 struct Arena : Module {
@@ -11,12 +12,12 @@ struct Arena : Module {
 	float phase = 0.f;
 	float blinkPhase = 0.f;
 
-	UdpTransmitSocket *transmitSocket;
-
 	Arena() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
 	}
+
+	void onAdd() override { URack::Dispatcher::send(this->id); }
 
 	~Arena() {}
 
