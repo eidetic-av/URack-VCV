@@ -1,6 +1,6 @@
-#pragma once
 #include "widget/SvgWidget.hpp"
 
+namespace URack {
 
 struct PointCloudPort {
 
@@ -12,3 +12,5 @@ struct PointCloudOutput : PointCloudPort { };
 struct PointCloudPortWidget : rack::widget::SvgWidget {
 
 };
+
+}
