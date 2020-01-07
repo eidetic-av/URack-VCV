@@ -2,14 +2,15 @@
 #include "../lib/oscpack/osc/OscOutboundPacketStream.h"
 #include "plugin.hpp"
 
+/* #define LOCALHOST "192.168.1.116" */
 #define LOCALHOST "127.0.0.1"
 #define PORT 54321
 #define UDP_BUFFER_SIZE 1024
 
-#define ADD_ADDRESS "/manager/add"
-#define REMOVE_ADDRESS "/manager/remove"
-#define RESET_ADDRESS "/manager/reset"
-#define INSTANCE_ROOT "/manager/instance/"
+#define ADD_ADDRESS "add/"
+#define REMOVE_ADDRESS "remove/"
+#define RESET_ADDRESS "reset/"
+#define INSTANCE_ROOT "instance/"
 
 namespace URack {
 
