@@ -22,7 +22,12 @@ void Dispatcher::create() {
 		<< osc::EndMessage;
 	transmitSockets[0]->Send(p.Data(), p.Size());
 
-	DEBUG("%s", "Constructed a dispatcher instance");
+	std::string msg = "constructed dispatcher for ";
+	msg += LOCALHOST;
+	msg += ":";
+	msg += std::to_string(PORT);
+
+	DEBUG("%s", msg.c_str());
 }
 
 void Dispatcher::send(int hostNum, std::string address, OscArg args[],
