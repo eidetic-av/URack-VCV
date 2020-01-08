@@ -7,8 +7,8 @@ struct Arena : URack::UModule {
 		CAMERA_ORIGIN_Y_INPUT,
 		CAMERA_ORIGIN_Z_INPUT,
 		CAMERA_DISTANCE_INPUT,
-		CAMERA_HEIGHT_INPUT,
-		CAMERA_ORBIT_INPUT,
+		CAMERA_ORBIT_X_INPUT,
+		CAMERA_ORBIT_Y_INPUT,
 		CAMERA_FOCAL_INPUT,
 		NUM_INPUTS
 	};
@@ -48,11 +48,11 @@ struct ArenaWidget : URack::UModuleWidget {
 					Arena::CAMERA_DISTANCE_INPUT),
 				"CameraDistance");
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 55)), module,
-					Arena::CAMERA_HEIGHT_INPUT),
-				"CameraHeight");
+					Arena::CAMERA_ORBIT_X_INPUT),
+				"CameraOrbitX");
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 65)), module,
-					Arena::CAMERA_ORBIT_INPUT),
-				"CameraOrbit");
+					Arena::CAMERA_ORBIT_Y_INPUT),
+				"CameraOrbitY");
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 115)), module,
 					Arena::CAMERA_FOCAL_INPUT),
 				"CameraFocalLength");
