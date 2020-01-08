@@ -18,20 +18,27 @@ struct UModule : Module {
 	}
 
 	void onAdd() override {
-		lastInputValues.resize(inputs.size());
-		instanceAddress = INSTANCE_ROOT + model->slug + "/" + std::to_string(id);
+		instanceAddress = "instance/" + model->slug + "/" + std::to_string(id);
 		OscArg args [] = { model->slug.c_str(), id };
-		URack::Dispatcher::send(host, ADD_ADDRESS, args, 2);
+		URack::Dispatcher::send(host, "add", args, 2);
+
+		// initialise last input values array
+		// and force an update
+		lastInputValues.resize(inputs.size());
+		for (unsigned int i = 0; i < inputs.size(); i++)
+			lastInputValues[i] = -99;
 	}
 
 	void onRemove() override {
 		OscArg args [] = { model->slug.c_str(), id };
-		URack::Dispatcher::send(host, REMOVE_ADDRESS, args, 2);
+		URack::Dispatcher::send(host, "remove", args, 2);
 	}
 
 	void onReset() override {
 		OscArg args [] = { model->slug.c_str(), id };
-		URack::Dispatcher::send(host, RESET_ADDRESS, args, 2);
+		URack::Dispatcher::send(host, "reset", args, 2);
+		for (unsigned int i = 0; i < inputs.size(); i++)
+			lastInputValues[i] = -99;
 	}
 
 	void process(const ProcessArgs & args) override {
