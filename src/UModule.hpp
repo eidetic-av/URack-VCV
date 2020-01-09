@@ -41,42 +41,49 @@ struct UModule : Module {
 			lastInputValues[i] = -99;
 	}
 
-	void process(const ProcessArgs & args) override {
-		update(args);
+	/* void process(const ProcessArgs & args) override { */
+	/* 	update(args); */
 
-		updateTimer += args.sampleTime;
-		// only send updates over OSC every 100Hz
-		if (updateTimer >= 0.01f) {
-			// check for changed values and send updates if necessary
-			for (int i = 0; i < (int) inputs.size(); i++)
-			{
-				if (std::abs(inputs[i].getVoltage() - lastInputValues[i]) > epsilon)
-				{
-					OscArg update [] = { inputs[i].getVoltage() };
-					std::string address = instanceAddress + "/" + inputAddressMap[i];
-					URack::Dispatcher::send(host, address, update, 1);
-					lastInputValues[i] = inputs[i].getVoltage();
-				}
-			}
-			updateTimer -= 0.01f;
-		}
-	}
+	/* 	updateTimer += args.sampleTime; */
+	/* 	// only send updates over OSC every 100Hz */
+	/* 	if (updateTimer >= 0.01f) { */
+	/* 		// check for changed values and send updates if necessary */
+	/* 		for (int i = 0; i < (int) inputs.size(); i++) */
+	/* 		{ */
+	/* 			if (std::abs(inputs[i].getVoltage() - lastInputValues[i]) > epsilon) */
+	/* 			{ */
+	/* 				OscArg update [] = { inputs[i].getVoltage() }; */
+	/* 				std::string address = instanceAddress + "/" + inputAddressMap[i]; */
+	/* 				URack::Dispatcher::send(host, address, update, 1); */
+	/* 				lastInputValues[i] = inputs[i].getVoltage(); */
+	/* 			} */
+	/* 		} */
+	/* 		updateTimer -= 0.01f; */
+	/* 	} */
+	/* } */
 
 	// override update instead of process in implimentation
 	virtual void update(const ProcessArgs & args) { };
 
+	void sendUpdate(float value, std::string paramAddress) {
+		URack::OscArg update[] = { value };
+		std::string address = instanceAddress + "/" + paramAddress;
+		URack::Dispatcher::send(host, address, update, 1);
+	};
 };
 
 struct UModuleWidget : ModuleWidget {
-	void addInput(PortWidget * input, std::string oscAddress) {
-		ModuleWidget::addInput(input);
-		// if this is a real module, not just being displayed in the browser
-		if (this->module != NULL) {
-			// create an osc address for the input
-			auto uModule = (UModule *) this->module;
-			uModule->inputAddressMap.insert({uModule->inputAddressMap.size(), oscAddress});
-		}
-	}
+
+	/* void addInput(PortWidget * input, std::string oscAddress) { */
+	/* 	ModuleWidget::addInput(input); */
+	/* 	// if this is a real module, not just being displayed in the browser */
+	/* 	if (this->module != NULL) { */
+	/* 		// create an osc address for the input */
+	/* 		auto uModule = (UModule *) this->module; */
+	/* 		uModule->inputAddressMap.insert({uModule->inputAddressMap.size(), oscAddress}); */
+	/* 	} */
+	/* } */
+
 };
 
 }

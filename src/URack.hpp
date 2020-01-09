@@ -2,8 +2,8 @@
 #include "../lib/oscpack/osc/OscOutboundPacketStream.h"
 #include "plugin.hpp"
 
-#define LOCALHOST "192.168.1.116"
-/* #define LOCALHOST "169.254.206.226" */
+/* #define LOCALHOST "192.168.1.116" */
+#define LOCALHOST "169.254.206.226"
 /* #define LOCALHOST "127.0.0.1" */
 #define PORT 54321
 #define UDP_BUFFER_SIZE 1024
