@@ -1,5 +1,5 @@
 #include "URack.hpp"
-#include <map>
+#include <tuple>
 
 namespace URack {
 
@@ -7,14 +7,20 @@ struct UModule : Module {
 
 	int host = 0;
 	std::string instanceAddress;
-	std::map<int, std::string> inputAddressMap;
-
+	
 	float epsilon = std::numeric_limits<float>::epsilon();
 
 	float updateTimer = -1;
-	std::vector<float> lastInputValues;
+	std::vector<float> lastParamValues;
+	std::vector<float> lastInputVoltages;
+	std::vector<std::tuple<int, int, std::string>> updateParams;
 
 	UModule() {
+	}
+
+	void configUpdate(int param, int input, std::string oscAddress)
+	{
+		updateParams.push_back(std::make_tuple(param, input, oscAddress));
 	}
 
 	void onAdd() override {
@@ -22,11 +28,12 @@ struct UModule : Module {
 		OscArg args [] = { model->slug.c_str(), id };
 		URack::Dispatcher::send(host, "add", args, 2);
 
-		// initialise last input values array
-		// and force an update
-		lastInputValues.resize(inputs.size());
+		// initialise last values arrays
+		// and set to -99 to force an update
 		for (unsigned int i = 0; i < inputs.size(); i++)
-			lastInputValues[i] = -99;
+			lastInputVoltages.push_back(-99);
+		for (unsigned int i = 0; i < params.size(); i++)
+			lastParamValues.push_back(-99);
 	}
 
 	void onRemove() override {
@@ -38,38 +45,39 @@ struct UModule : Module {
 		OscArg args [] = { model->slug.c_str(), id };
 		URack::Dispatcher::send(host, "reset", args, 2);
 		for (unsigned int i = 0; i < inputs.size(); i++)
-			lastInputValues[i] = -99;
+			lastInputVoltages[i] = -99;
+		for (unsigned int i = 0; i < params.size(); i++)
+			lastParamValues[i] = -99;
 	}
 
-	/* void process(const ProcessArgs & args) override { */
-	/* 	update(args); */
-
-	/* 	updateTimer += args.sampleTime; */
-	/* 	// only send updates over OSC every 100Hz */
-	/* 	if (updateTimer >= 0.01f) { */
-	/* 		// check for changed values and send updates if necessary */
-	/* 		for (int i = 0; i < (int) inputs.size(); i++) */
-	/* 		{ */
-	/* 			if (std::abs(inputs[i].getVoltage() - lastInputValues[i]) > epsilon) */
-	/* 			{ */
-	/* 				OscArg update [] = { inputs[i].getVoltage() }; */
-	/* 				std::string address = instanceAddress + "/" + inputAddressMap[i]; */
-	/* 				URack::Dispatcher::send(host, address, update, 1); */
-	/* 				lastInputValues[i] = inputs[i].getVoltage(); */
-	/* 			} */
-	/* 		} */
-	/* 		updateTimer -= 0.01f; */
-	/* 	} */
-	/* } */
+	void process(const ProcessArgs & args) override {
+		update(args);
+		updateTimer += args.sampleTime;
+		// only send updates over OSC every 1000Hz
+		if (updateTimer >= 0.001f) {
+			// check for changed values and send updates if necessary
+			for (unsigned int i = 0; i < updateParams.size(); i++)
+			{
+				int param = std::get<0>(updateParams[i]);
+				int input = std::get<1>(updateParams[i]);
+				if (std::abs(params[param].getValue() - lastParamValues[i]) > epsilon
+					|| std::abs(inputs[input].getVoltage() - lastInputVoltages[i]) > epsilon)
+				{
+					float value = params[param].getValue();
+					float voltage = inputs[input].getVoltage();
+					OscArg update [] = { value + voltage };
+					std::string address = instanceAddress + "/" + std::get<2>(updateParams[i]);
+					URack::Dispatcher::send(host, address, update, 1);
+					lastParamValues[i] = value;
+					lastInputVoltages[i] = voltage;
+				}
+			}
+			updateTimer -= 0.001f;
+		}
+	}
 
 	// override update instead of process in implimentation
 	virtual void update(const ProcessArgs & args) { };
-
-	void sendUpdate(float value, std::string paramAddress) {
-		URack::OscArg update[] = { value };
-		std::string address = instanceAddress + "/" + paramAddress;
-		URack::Dispatcher::send(host, address, update, 1);
-	};
 };
 
 struct UModuleWidget : ModuleWidget {
