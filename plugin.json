@@ -18,6 +18,17 @@
       "name": "Arena",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "LiveScan3D",
+      "name": "LiveScan3D",
+      "description": "",
+      "tags": [
+        "URack",
+        "Camera",
+        "Point Cloud",
+        "Input"
+      ]
     }
   ]
 }
