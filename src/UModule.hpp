@@ -7,20 +7,34 @@ struct UModule : Module {
 
 	int host = 0;
 	std::string instanceAddress;
-	
+
 	float epsilon = std::numeric_limits<float>::epsilon();
 
 	float updateTimer = -1;
 	std::vector<float> lastParamValues;
 	std::vector<float> lastInputVoltages;
-	std::vector<std::tuple<int, int, std::string>> updateParams;
+
+	struct UpdateParam {
+		int param;
+		int input;
+		int inputScaleParam;
+		std::string oscAddress;
+	};
+
+	std::vector<UpdateParam> updateParams;
 
 	UModule() {
 	}
 
 	void configUpdate(int param, int input, std::string oscAddress)
 	{
-		updateParams.push_back(std::make_tuple(param, input, oscAddress));
+		configUpdate(param, input, -99, oscAddress);
+	}
+
+	void configUpdate(int param, int input, int inputScaleParam, std::string oscAddress)
+	{
+		UpdateParam updateParam = {param, input, inputScaleParam, oscAddress};
+		updateParams.push_back(updateParam);
 	}
 
 	void onAdd() override {
@@ -58,16 +72,24 @@ struct UModule : Module {
 			// check for changed values and send updates if necessary
 			for (unsigned int i = 0; i < updateParams.size(); i++)
 			{
-				int param = std::get<0>(updateParams[i]);
-				int input = std::get<1>(updateParams[i]);
+				int param = updateParams[i].param;
+				int input = updateParams[i].input;
+				int inputScaleParam = updateParams[i].inputScaleParam;
 				if (std::abs(params[param].getValue() - lastParamValues[i]) > epsilon
-					|| std::abs(inputs[input].getVoltage() - lastInputVoltages[i]) > epsilon)
+						|| std::abs(inputs[input].getVoltage() - lastInputVoltages[i]) > epsilon)
 				{
 					float value = params[param].getValue();
 					float voltage = inputs[input].getVoltage();
+					// if an input scale param is defined (i.e. not -99)
+					// then attenuate the input voltage by its value
+					if (inputScaleParam != -99)
+						voltage = voltage * params[inputScaleParam].getValue();
+					// send the param value + the (attenuated) voltage to Unity
 					OscArg update [] = { value + voltage };
-					std::string address = instanceAddress + "/" + std::get<2>(updateParams[i]);
+					std::string address = instanceAddress + "/" + updateParams[i].oscAddress;
 					URack::Dispatcher::send(host, address, update, 1);
+					// store the values for the next frame
+					// so that we only send when there is a change
 					lastParamValues[i] = value;
 					lastInputVoltages[i] = voltage;
 				}
@@ -81,16 +103,6 @@ struct UModule : Module {
 };
 
 struct UModuleWidget : ModuleWidget {
-
-	/* void addInput(PortWidget * input, std::string oscAddress) { */
-	/* 	ModuleWidget::addInput(input); */
-	/* 	// if this is a real module, not just being displayed in the browser */
-	/* 	if (this->module != NULL) { */
-	/* 		// create an osc address for the input */
-	/* 		auto uModule = (UModule *) this->module; */
-	/* 		uModule->inputAddressMap.insert({uModule->inputAddressMap.size(), oscAddress}); */
-	/* 	} */
-	/* } */
 
 };
 
