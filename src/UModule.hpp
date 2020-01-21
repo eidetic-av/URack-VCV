@@ -22,6 +22,9 @@ struct UModule : Module {
 
 	std::vector<UpdateParam> updateParams;
 
+	std::vector<std::tuple<int, bool>> pointCloudInputConnections;
+	std::vector<std::tuple<int, bool>> pointCloudOutputConnections;
+
 	UModule() {
 	}
 
@@ -93,6 +96,41 @@ struct UModule : Module {
 					lastInputVoltages[i] = voltage;
 				}
 			}
+			// check for new custom type port connections,
+			// and send updates if necessary
+			if (pointCloudInputConnections.size() > 0)
+			{
+				for (unsigned int i = 0; i < pointCloudInputConnections.size(); i++)
+				{
+					auto connection = pointCloudInputConnections[i];
+					int id = std::get<0>(connection);
+					bool connectionStatus = std::get<1>(connection);
+					auto input = inputs[id];
+					bool connected = input.isConnected();
+					if (connectionStatus != connected)
+					{
+						pointCloudInputConnections[i] = std::make_tuple(id, connected);
+						DEBUG("INPUT CONNECTION CHANGED");
+					}
+				}
+			}
+			if (pointCloudOutputConnections.size() > 0)
+			{
+				for (unsigned int i = 0; i < pointCloudOutputConnections.size(); i++)
+				{
+					auto connection = pointCloudOutputConnections[i];
+					int id = std::get<0>(connection);
+					bool connectionStatus = std::get<1>(connection);
+					auto output = outputs[id];
+					bool connected = output.isConnected();
+					if (connectionStatus != connected)
+					{
+						pointCloudOutputConnections[i] = std::make_tuple(id, connected);
+						DEBUG("OUTPUT CONNECTION CHANGED");
+					}
+				}
+			}
+
 			updateTimer -= 0.001f;
 		}
 	}
@@ -103,18 +141,21 @@ struct UModule : Module {
 
 struct UModuleWidget : ModuleWidget {
 
-	void addPointCloudInput(PointCloudPort* port)
+	void addPointCloudInput(math::Vec pos, UModule* module, int inputId)
 	{
-		addOutput(port);
+		auto port = createInputCentered<PointCloudPort>(pos, module, inputId);
+		addInput(port);
 		port->type = PointCloudPort::INPUT;
+		if (module) module->pointCloudInputConnections.push_back(std::make_tuple(inputId, false));
 	}
 
-	void addPointCloudOutput(PointCloudPort* port)
+	void addPointCloudOutput(math::Vec pos, UModule* module, int outputId)
 	{
+		auto port = createOutputCentered<PointCloudPort>(pos, module, outputId);
 		addOutput(port);
 		port->type = PointCloudPort::OUTPUT;
+		if (module) module->pointCloudOutputConnections.push_back(std::make_tuple(outputId, false));
 	}
-
 };
 
 }

@@ -77,8 +77,6 @@ struct LiveScan3D : URack::UModule {
 		configUpdate(MIN_BOUNDS_X_PARAM, MIN_BOUNDS_X_INPUT,
 				MIN_BOUNDS_X_INPUT_SCALE_PARAM, "MinX");
 	}
-
-	void process(const ProcessArgs& args) override {}
 };
 
 struct LiveScan3DWidget : URack::UModuleWidget {
@@ -192,11 +190,10 @@ struct LiveScan3DWidget : URack::UModuleWidget {
 		addOutput(createOutputCentered<PJ301MPort>(
 					mm2px(Vec(12.553, 288.464)), module, LiveScan3D::NEW_FRAME_OUTPUT));
 
-		addPointCloudOutput(createOutputCentered<URack::PointCloudPort>(
-					mm2px(Vec(10, 119.964)), module, LiveScan3D::POINT_CLOUD_OUTPUT));
-
-		addPointCloudInput(createOutputCentered<URack::PointCloudPort>(
-					mm2px(Vec(30, 119.964)), module, LiveScan3D::POINT_CLOUD_INPUT));
+		addPointCloudOutput(mm2px(Vec(10, 119.964)), module,
+				LiveScan3D::POINT_CLOUD_OUTPUT);
+		addPointCloudInput(mm2px(Vec(30, 119.964)), module,
+				LiveScan3D::POINT_CLOUD_INPUT);
 	}
 };
 
