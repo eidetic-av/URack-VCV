@@ -1,5 +1,6 @@
 #include "../lib/oscpack/ip/UdpSocket.h"
 #include "../lib/oscpack/osc/OscOutboundPacketStream.h"
+#include "PointCloudPort.hpp"
 #include "plugin.hpp"
 
 /* #define LOCALHOST "172.16.1.76" */

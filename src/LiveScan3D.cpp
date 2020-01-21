@@ -41,13 +41,10 @@ struct LiveScan3D : URack::UModule {
 		TRANSLATE_Y_INPUT,
 		SCALE_Z_INPUT,
 		TRANSLATE_Z_INPUT,
+		POINT_CLOUD_INPUT,
 		NUM_INPUTS
 	};
-	enum OutputIds {
-		POINT_CLOUD_OUT_OUTPUT,
-		NEW_FRAME_OUT_OUTPUT,
-		NUM_OUTPUTS
-	};
+	enum OutputIds { POINT_CLOUD_OUTPUT, NEW_FRAME_OUTPUT, NUM_OUTPUTS };
 	enum LightIds { NUM_LIGHTS };
 
 	LiveScan3D() {
@@ -84,7 +81,7 @@ struct LiveScan3D : URack::UModule {
 	void process(const ProcessArgs& args) override {}
 };
 
-struct LiveScan3DWidget : ModuleWidget {
+struct LiveScan3DWidget : URack::UModuleWidget {
 	LiveScan3DWidget(LiveScan3D* module) {
 		setModule(module);
 		setPanel(APP->window->loadSvg(
@@ -193,11 +190,13 @@ struct LiveScan3DWidget : ModuleWidget {
 					mm2px(Vec(7.333, 105.464)), module, LiveScan3D::TRANSLATE_Z_INPUT));
 
 		addOutput(createOutputCentered<PJ301MPort>(
-					mm2px(Vec(68.95, 119.964)), module,
-					LiveScan3D::POINT_CLOUD_OUT_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(
-					mm2px(Vec(12.553, 288.464)), module,
-					LiveScan3D::NEW_FRAME_OUT_OUTPUT));
+					mm2px(Vec(12.553, 288.464)), module, LiveScan3D::NEW_FRAME_OUTPUT));
+
+		addPointCloudOutput(createOutputCentered<URack::PointCloudPort>(
+					mm2px(Vec(10, 119.964)), module, LiveScan3D::POINT_CLOUD_OUTPUT));
+
+		addPointCloudInput(createOutputCentered<URack::PointCloudPort>(
+					mm2px(Vec(30, 119.964)), module, LiveScan3D::POINT_CLOUD_INPUT));
 	}
 };
 

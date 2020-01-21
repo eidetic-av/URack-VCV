@@ -1,5 +1,4 @@
 #include "URack.hpp"
-#include <tuple>
 
 namespace URack {
 
@@ -103,6 +102,18 @@ struct UModule : Module {
 };
 
 struct UModuleWidget : ModuleWidget {
+
+	void addPointCloudInput(PointCloudPort* port)
+	{
+		addOutput(port);
+		port->type = PointCloudPort::INPUT;
+	}
+
+	void addPointCloudOutput(PointCloudPort* port)
+	{
+		addOutput(port);
+		port->type = PointCloudPort::OUTPUT;
+	}
 
 };
 
