@@ -191,9 +191,9 @@ struct LiveScan3DWidget : URack::UModuleWidget {
 					mm2px(Vec(12.553, 288.464)), module, LiveScan3D::NEW_FRAME_OUTPUT));
 
 		addPointCloudOutput(mm2px(Vec(10, 119.964)), module,
-				LiveScan3D::POINT_CLOUD_OUTPUT);
+				LiveScan3D::POINT_CLOUD_OUTPUT, "PointCloudOutput");
 		addPointCloudInput(mm2px(Vec(30, 119.964)), module,
-				LiveScan3D::POINT_CLOUD_INPUT);
+				LiveScan3D::POINT_CLOUD_INPUT, "PointCloudInput");
 	}
 };
 

@@ -88,6 +88,8 @@ struct PointCloudCableWidget : app::CableWidget {
 
 struct PointCloudPort : app::SvgPort {
 
+	std::string oscAddress;
+
 	PointCloudPort() {
 		setSvg(APP->window->loadSvg(asset::system("res/ComponentLibrary/PJ301M.svg")));
 	}
