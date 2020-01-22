@@ -23,20 +23,20 @@ struct OscArg {
 		m_data.FLOAT = e;
 		m_type = Float;
 	}
-	OscArg(const char * e) {
+	OscArg(const char* e) {
 		m_data.STRING = e;
 		m_type = String;
 	}
 	type get_type() const { return m_type; }
 	int get_int() const { return m_data.INT; }
 	float get_float() const { return m_data.FLOAT; }
-	const char * get_string() const { return m_data.STRING; }
+	const char* get_string() const { return m_data.STRING; }
 
 	type m_type;
 	union {
 		int INT;
 		float FLOAT;
-		const char * STRING;
+		const char* STRING;
 	} m_data;
 };
 
@@ -46,8 +46,8 @@ struct Dispatcher {
 
 	static void create();
 
-	static void send(int host, std::string address, OscArg args [], unsigned int argLength);
+	static void send(int host, std::string address, std::vector<OscArg> args);
 
 	Dispatcher() {}
 };
-}
+}  // namespace URack

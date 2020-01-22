@@ -44,8 +44,8 @@ struct UModule : Module {
 
 	void onAdd() override {
 		instanceAddress = "instance/" + model->slug + "/" + std::to_string(id);
-		OscArg args[] = {model->slug.c_str(), id};
-		URack::Dispatcher::send(host, "add", args, 2);
+		std::vector<OscArg> args = {model->slug.c_str(), id};
+		URack::Dispatcher::send(host, "add", args);
 
 		// initialise last values arrays
 		// and set to -99 to force an update
@@ -56,13 +56,13 @@ struct UModule : Module {
 	}
 
 	void onRemove() override {
-		OscArg args[] = {model->slug.c_str(), id};
-		URack::Dispatcher::send(host, "remove", args, 2);
+		std::vector<OscArg> args = {model->slug.c_str(), id};
+		URack::Dispatcher::send(host, "remove", args);
 	}
 
 	void onReset() override {
-		OscArg args[] = {model->slug.c_str(), id};
-		URack::Dispatcher::send(host, "reset", args, 2);
+		std::vector<OscArg> args = {model->slug.c_str(), id};
+		URack::Dispatcher::send(host, "reset", args);
 		for (unsigned int i = 0; i < inputs.size(); i++)
 			lastInputVoltages[i] = -99;
 		for (unsigned int i = 0; i < params.size(); i++)
@@ -90,17 +90,17 @@ struct UModule : Module {
 					if (inputScaleParam != -99)
 						voltage = voltage * params[inputScaleParam].getValue();
 					// send the param value + the (attenuated) voltage to Unity
-					OscArg update[] = {value + voltage};
+					std::vector<OscArg> update = {value + voltage};
 					std::string address =
 						instanceAddress + "/" + updateParams[i].oscAddress;
-					URack::Dispatcher::send(host, address, update, 1);
+					URack::Dispatcher::send(host, address, update);
 					// store the values for the next frame
 					// so that we only send when there is a change
 					lastParamValues[i] = value;
 					lastInputVoltages[i] = voltage;
 				}
 			}
-			// check for new custom type port connections,
+			// check for new point cloud port connections,
 			// and send updates if necessary
 			if (pointCloudInputs.size() > 0) {
 				for (unsigned int i = 0; i < pointCloudInputs.size(); i++) {
@@ -122,27 +122,33 @@ struct UModule : Module {
 					auto output = outputs[id];
 					bool connected = output.isConnected();
 					if (connectionStatus != connected) {
+						// connection status changed, update Port Info
 						pointCloudOutputs[i].connectionStatus = connected;
+						// try get the cable
 						PointCloudPort* port = connection.port;
-						auto cw = dynamic_cast<PointCloudCableWidget*>(
-								APP->scene->rack->getTopCable(port));
+						CableWidget* cw = APP->scene->rack->getTopCable(port);
 						if (cw) {
+							// if cable exists, it means we created a connection
 							auto inputPort =
 								dynamic_cast<PointCloudPort*>(cw->inputPort);
 							auto module =
 								dynamic_cast<UModule*>(inputPort->module);
-							auto str = (this->instanceAddress) + " " +
-								port->oscAddress +
-								" connect: " + module->model->slug +
-								" " + std::to_string(module->id) + " " +
-								inputPort->oscAddress;
-							DEBUG(str.c_str());
-							// DISPATCH OSC CONNECT MESSAGE
+							// Dispatch connect message
+							std::vector<OscArg> update = {
+								port->oscAddress.c_str(),
+								module->model->slug.c_str(), module->id,
+								inputPort->oscAddress.c_str()};
+							std::string address = instanceAddress + "/connect";
+							URack::Dispatcher::send(host, address, update);
 						} else {
-							auto str = (this->instanceAddress) + " " +
-								port->oscAddress + " disconnect";
-							DEBUG(str.c_str());
-							// DISPATCH OSC DISCONNECT MESSAGE
+							// if cable doesn't exist it means we removed a
+							// connection
+							// Dispatch disconnect message
+							std::vector<OscArg> update = {
+								port->oscAddress.c_str()};
+							std::string address =
+								instanceAddress + "/disconnect";
+							URack::Dispatcher::send(host, address, update);
 						}
 					}
 				}

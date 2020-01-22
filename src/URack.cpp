@@ -30,12 +30,12 @@ void Dispatcher::create() {
 	DEBUG("%s", msg.c_str());
 }
 
-void Dispatcher::send(int hostNum, std::string address, OscArg args[],
-		unsigned int argLength) {
+void Dispatcher::send(int hostNum, std::string address,
+		std::vector<OscArg> args) {
 	char buffer[UDP_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
 	p << osc::BeginMessage(address.c_str());
-	for (unsigned int i = 0; i < argLength; i++) {
+	for (unsigned int i = 0; i < args.size(); i++) {
 		switch (args[i].get_type()) {
 			case OscArg::Int:
 				p << args[i].get_int();
