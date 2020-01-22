@@ -29,6 +29,14 @@
         "Point Cloud",
         "Input"
       ]
+    },
+    {
+      "slug": "Renderer",
+      "name": "Renderer",
+      "description": "",
+      "tags": [
+        "URack"
+      ]
     }
   ]
 }
