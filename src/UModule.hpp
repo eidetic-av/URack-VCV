@@ -22,14 +22,14 @@ struct UModule : Module {
 
 	std::vector<UpdateParam> updateParams;
 
-	struct PointCloudPortInto {
+	struct PointCloudPortInfo {
 		int id;
 		bool connectionStatus;
 		PointCloudPort* port;
 	};
 
-	std::vector<PointCloudPortInto> pointCloudInputs;
-	std::vector<PointCloudPortInto> pointCloudOutputs;
+	std::vector<PointCloudPortInfo> pointCloudInputs;
+	std::vector<PointCloudPortInfo> pointCloudOutputs;
 
 	bool initialised = false;
 
