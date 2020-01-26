@@ -4,10 +4,11 @@
 namespace URack {
 
 struct UModule : Module {
-	int host = 0;
-	std::string instanceAddress;
+	const char* hostIp = LOCALHOST;
+	int hostPort = PORT;
+	int hostNum = 0;
 
-	float epsilon = std::numeric_limits<float>::epsilon();
+	std::string instanceAddress;
 
 	float updateTimer = -1;
 	std::vector<float> lastParamValues;
@@ -16,7 +17,7 @@ struct UModule : Module {
 	struct UpdateParam {
 		int param;
 		int input;
-		int inputScaleParam;
+		int atten;
 		std::string oscAddress;
 	};
 
@@ -39,16 +40,33 @@ struct UModule : Module {
 		configUpdate(param, input, -99, oscAddress);
 	}
 
-	void configUpdate(int param, int input, int inputScaleParam,
-			std::string oscAddress) {
-		UpdateParam updateParam = {param, input, inputScaleParam, oscAddress};
+	void configUpdate(int param, int input, int atten, std::string oscAddress) {
+		UpdateParam updateParam = {param, input, atten, oscAddress};
 		updateParams.push_back(updateParam);
+	}
+
+	void setHost(const char* ip, int port = PORT) {
+		int host = -1;
+		// if host already exists in Dispatcher, assign that
+		for (unsigned int i = 0; i < Dispatcher::sockets.size(); i++) {
+			auto socket = Dispatcher::sockets[i];
+			if (socket.ip == ip && socket.port == port) {
+				host = i;
+				break;
+			}
+		}
+		// otherwise create a new one at the specified endpoint
+		if (hostNum == -1) hostNum = Dispatcher::create(ip, port);
+		// and set the UModule properties
+		hostNum = host;
+		hostIp = ip;
+		hostPort = port;
 	}
 
 	void onAdd() override {
 		instanceAddress = "instance/" + model->slug + "/" + std::to_string(id);
 		std::vector<OscArg> args = {model->slug.c_str(), id};
-		URack::Dispatcher::send(host, "add", args);
+		URack::Dispatcher::send(hostNum, "add", args);
 
 		// initialise last values arrays
 		// and set to -99 to force an update
@@ -60,12 +78,12 @@ struct UModule : Module {
 
 	void onRemove() override {
 		std::vector<OscArg> args = {model->slug.c_str(), id};
-		URack::Dispatcher::send(host, "remove", args);
+		URack::Dispatcher::send(hostNum, "remove", args);
 	}
 
 	void onReset() override {
 		std::vector<OscArg> args = {model->slug.c_str(), id};
-		URack::Dispatcher::send(host, "reset", args);
+		URack::Dispatcher::send(hostNum, "reset", args);
 		for (unsigned int i = 0; i < inputs.size(); i++)
 			lastInputVoltages[i] = -99;
 		for (unsigned int i = 0; i < params.size(); i++)
@@ -75,29 +93,30 @@ struct UModule : Module {
 	void process(const ProcessArgs& args) override {
 		update(args);
 		updateTimer += args.sampleTime;
-		// only send updates over OSC every 1000Hz
-		if (updateTimer >= 0.001f) {
+		if (updateTimer >= OSC_UPDATE_PERIOD) {
 			// check for changed values
 			// and send updates if necessary
 			for (unsigned int i = 0; i < updateParams.size(); i++) {
 				int param = updateParams[i].param;
 				int input = updateParams[i].input;
-				int inputScaleParam = updateParams[i].inputScaleParam;
-				if (std::abs(params[param].getValue() - lastParamValues[i]) >
-						epsilon ||
-						std::abs(inputs[input].getVoltage() -
-							lastInputVoltages[i]) > epsilon) {
-					float value = params[param].getValue();
-					float voltage = inputs[input].getVoltage();
-					// if an input scale param is defined (i.e. not -99)
-					// then attenuate the input voltage by its value
-					if (inputScaleParam != -99)
-						voltage = voltage * params[inputScaleParam].getValue();
+				int atten = updateParams[i].atten;
+
+				float value = param < 0 ? 0 : params[param].getValue();
+				float voltage = input < 0 ? 0 : inputs[input].getVoltage();
+				voltage =
+					atten < 0 ? voltage : voltage * params[atten].getValue();
+
+				bool sendUpdate =
+					std::abs(value - lastParamValues[i]) > EPSILON
+					? true
+					: std::abs(voltage - lastInputVoltages[i]) > EPSILON;
+
+				if (sendUpdate) {
 					// send the param value + the (attenuated) voltage to Unity
 					std::vector<OscArg> update = {value + voltage};
 					std::string address =
 						instanceAddress + "/" + updateParams[i].oscAddress;
-					URack::Dispatcher::send(host, address, update);
+					URack::Dispatcher::send(hostNum, address, update);
 					// store the values for the next frame
 					// so that we only send when there is a change
 					lastParamValues[i] = value;
@@ -130,7 +149,7 @@ struct UModule : Module {
 								port->oscAddress.c_str(), module->id,
 								inputPort->oscAddress.c_str()};
 							std::string address = instanceAddress + "/connect";
-							URack::Dispatcher::send(host, address, update);
+							URack::Dispatcher::send(hostNum, address, update);
 
 							// Todo: Need to figure out how to replace regular
 							// cables that are loaded on serialization with
@@ -149,12 +168,12 @@ struct UModule : Module {
 								port->oscAddress.c_str()};
 							std::string address =
 								instanceAddress + "/disconnect";
-							URack::Dispatcher::send(host, address, update);
+							URack::Dispatcher::send(hostNum, address, update);
 						}
 					}
 				}
 			}
-			updateTimer -= 0.001f;
+			updateTimer -= OSC_UPDATE_PERIOD;
 		}
 	}
 
@@ -169,9 +188,7 @@ struct UModuleWidget : ModuleWidget {
 		addInput(port);
 		port->type = PointCloudPort::INPUT;
 		port->oscAddress = oscAddress;
-		if (module) {
-			module->pointCloudInputs.push_back({inputId, false, port});
-		}
+		if (module) module->pointCloudInputs.push_back({inputId, false, port});
 	}
 
 	void addPointCloudOutput(math::Vec pos, UModule* module, int outputId,
@@ -180,9 +197,8 @@ struct UModuleWidget : ModuleWidget {
 		addOutput(port);
 		port->type = PointCloudPort::OUTPUT;
 		port->oscAddress = oscAddress;
-		if (module) {
+		if (module)
 			module->pointCloudOutputs.push_back({outputId, false, port});
-		}
 	}
 };
 

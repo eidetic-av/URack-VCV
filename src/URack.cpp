@@ -6,29 +6,35 @@ using namespace rack::logger;
 
 namespace URack {
 
-std::vector<UdpTransmitSocket*> Dispatcher::transmitSockets = {};
+std::vector<SocketInfo> Dispatcher::sockets = {};
 
-void Dispatcher::create() {
+int Dispatcher::create(const char* hostIp, int hostPort) {
 	// instantiate the dispatcher
 	instance = Dispatcher();
 
-	// add a local socket by default
-	transmitSockets.push_back(
-			new UdpTransmitSocket(IpEndpointName(LOCALHOST, PORT)));
+	int index = sockets.size();
+
+	sockets.push_back({new UdpTransmitSocket(IpEndpointName(hostIp, hostPort)),
+			hostIp, hostPort});
 
 	char buffer[UDP_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
-	p << osc::BeginMessage("/dispatcher/create") << LOCALHOST << PORT
+	p << osc::BeginMessage("/dispatcher/create") << hostIp << hostPort
 		<< osc::EndMessage;
-	transmitSockets[0]->Send(p.Data(), p.Size());
+	sockets[index].transmitSocket->Send(p.Data(), p.Size());
 
-	std::string msg = "constructed dispatcher for ";
-	msg += LOCALHOST;
+	std::string msg =
+		"constructed dispatcher " + std::to_string(index) + " at ";
+	msg += hostIp;
 	msg += ":";
-	msg += std::to_string(PORT);
+	msg += std::to_string(hostPort);
 
 	DEBUG("%s", msg.c_str());
+
+	return index;
 }
+
+void Dispatcher::destroy(int host) {}
 
 void Dispatcher::send(int hostNum, std::string address,
 		std::vector<OscArg> args) {
@@ -49,6 +55,6 @@ void Dispatcher::send(int hostNum, std::string address,
 		}
 	}
 	p << osc::EndMessage;
-	transmitSockets[hostNum]->Send(p.Data(), p.Size());
+	sockets[hostNum].transmitSocket->Send(p.Data(), p.Size());
 }
 }  // namespace URack

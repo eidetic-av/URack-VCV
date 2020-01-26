@@ -4,14 +4,17 @@
 #include "plugin.hpp"
 
 /* #define LOCALHOST "172.16.1.76" */
-/* #define LOCALHOST "192.168.1.119" */
-#define LOCALHOST "192.168.0.100"
+/* #define LOCALHOST "192.168.1.116" */
+/* #define LOCALHOST "192.168.0.100" */
 /* #define LOCALHOST "169.254.206.226" */
-/* #define LOCALHOST "127.0.0.1" */
+#define LOCALHOST "127.0.0.1"
 #define PORT 54321
 #define UDP_BUFFER_SIZE 1024
 
 namespace URack {
+
+const float EPSILON = std::numeric_limits<float>::epsilon();
+const float OSC_UPDATE_PERIOD = 0.001f;
 
 struct OscArg {
 	enum type { Int, Float, String };
@@ -40,11 +43,18 @@ struct OscArg {
 	} m_data;
 };
 
+struct SocketInfo {
+	UdpTransmitSocket* transmitSocket;
+	const char* ip;
+	int port;
+};
+
 struct Dispatcher {
 	static Dispatcher instance;
-	static std::vector<UdpTransmitSocket*> transmitSockets;
+	static std::vector<SocketInfo> sockets;
 
-	static void create();
+	static int create(const char* hostIp = LOCALHOST, int hostPort = PORT);
+	static void destroy(int host);
 
 	static void send(int host, std::string address, std::vector<OscArg> args);
 
