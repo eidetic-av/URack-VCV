@@ -1,4 +1,5 @@
 #include "UModule.hpp"
+#include "dsp/digital.hpp"
 
 struct Renderer : URack::UModule {
 	enum ParamIds {
@@ -44,21 +45,24 @@ struct Renderer : URack::UModule {
 		NUM_INPUTS
 	};
 	enum OutputIds { NUM_OUTPUTS };
-	enum LightIds { NUM_LIGHTS };
+	enum LightIds { ACTIVE_LIGHT, NUM_LIGHTS };
 
 	Renderer() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+		configActivate(ACTIVE_PARAM, ACTIVE_LIGHT, ACTIVE_INPUT);
 		configUpdate("SpawnRateMultiplier", SPAWN_RATE_PARAM, SPAWN_RATE_INPUT,
-				SPAWN_RATE_ATTEN_PARAM);
-		configUpdate("Size", SIZE_PARAM, SIZE_INPUT, SIZE_ATTEN_PARAM);
+				SPAWN_RATE_ATTEN_PARAM, 5.f);
+		configUpdate("Size", SIZE_PARAM, SIZE_INPUT, SIZE_ATTEN_PARAM, 2.5f);
 		configUpdate("PointCount", POINT_COUNT_PARAM, POINT_COUNT_INPUT,
-				POINT_COUNT_ATTEN_PARAM);
+				POINT_COUNT_ATTEN_PARAM, 5.f);
+		configUpdate("Lifetime", LIFETIME_PARAM, LIFETIME_INPUT,
+				LIFETIME_ATTEN_PARAM, 5.f);
+		configUpdate("Noise", FUZZ_PARAM, FUZZ_INPUT, FUZZ_ATTEN_PARAM, 1.5f);
 		configUpdate("Turbulence", TURBULENCE_PARAM, TURBULENCE_INPUT,
 				TURBULENCE_ATTEN_PARAM);
 		configUpdate("TurbulenceScroll", SCROLL_ATTEN_PARAM, SCROLL_INPUT);
-		configUpdate("Lifetime", LIFETIME_PARAM, LIFETIME_INPUT,
-				LIFETIME_ATTEN_PARAM);
-		configUpdate("Noise", FUZZ_PARAM, FUZZ_INPUT, FUZZ_ATTEN_PARAM);
+		configUpdate("TurbulenceDelay", DELAY_PARAM, DELAY_INPUT,
+				DELAY_ATTEN_PARAM);
 		configBiUpdate("TurbulenceScaleX", FORCE_X_PARAM, FORCE_X_INPUT,
 				FORCE_X_ATTEN_PARAM);
 		configBiUpdate("TurbulenceScaleY", FORCE_Y_PARAM, FORCE_Y_INPUT,
@@ -66,6 +70,8 @@ struct Renderer : URack::UModule {
 		configBiUpdate("TurbulenceScaleZ", FORCE_Z_PARAM, FORCE_Z_INPUT,
 				FORCE_Z_ATTEN_PARAM);
 	}
+
+	void update(const ProcessArgs& args) override {}
 };
 
 struct RendererWidget : URack::UModuleWidget {
@@ -73,6 +79,13 @@ struct RendererWidget : URack::UModuleWidget {
 		setModule(module);
 		setPanel(APP->window->loadSvg(
 					asset::plugin(pluginInstance, "res/Renderer.svg")));
+
+		addParam(createParamCentered<LEDBezel>(mm2px(Vec(33.338, 88.469)),
+					module, Renderer::ACTIVE_PARAM));
+		addChild(createLightCentered<LEDBezelLight<YellowLight>>(
+					mm2px(Vec(33.338, 88.469)), module, Renderer::ACTIVE_LIGHT));
+		addInput(createInputCentered<PJ301MPort>(
+					mm2px(Vec(43.218, 88.469)), module, Renderer::ACTIVE_INPUT));
 
 		addParam(createParamCentered<Davies1900hWhiteKnob>(
 					mm2px(Vec(57.655, 10.683)), module, Renderer::LIFETIME_PARAM));
@@ -106,8 +119,6 @@ struct RendererWidget : URack::UModuleWidget {
 					Renderer::TURBULENCE_ATTEN_PARAM));
 		addParam(createParamCentered<Davies1900hWhiteKnob>(
 					mm2px(Vec(15.75, 86.521)), module, Renderer::DELAY_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(
-					mm2px(Vec(43.218, 88.469)), module, Renderer::ACTIVE_PARAM));
 		addParam(createParamCentered<Trimpot>(
 					mm2px(Vec(55.816, 90.571)), module, Renderer::FORCE_X_ATTEN_PARAM));
 		addParam(createParamCentered<Trimpot>(
@@ -137,8 +148,6 @@ struct RendererWidget : URack::UModuleWidget {
 					module, Renderer::SIZE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(
 					mm2px(Vec(20.06, 74.886)), module, Renderer::TURBULENCE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(33.338, 88.469)), module, Renderer::ACTIVE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(
 					mm2px(Vec(64.535, 90.571)), module, Renderer::FORCE_X_INPUT));
 		addInput(createInputCentered<PJ301MPort>(
