@@ -1,4 +1,5 @@
 #include "URack.hpp"
+#include "dsp/digital.hpp"
 #include "plugin.hpp"
 #include "settings.hpp"
 
@@ -35,7 +36,21 @@ struct UModule : Module {
 
 	bool initialised = false;
 
+	int activateParam = -1;
+	int activateInput = -1;
+	int activateLight = -1;
+	dsp::BooleanTrigger activateTrigger;
+	bool active;
+	bool lastUpdateActive;
+
 	UModule() {}
+
+	void configActivate(int param, int light = -1, int input = -1) {
+		activateParam = param;
+		activateLight = light;
+		activateInput = input;
+		configParam(activateParam, 0.f, 1.f, 1.f, "Activate");
+	}
 
 	void configUpdate(int param, int input, std::string oscAddress) {
 		configUpdate(param, input, -99, oscAddress);
@@ -47,12 +62,12 @@ struct UModule : Module {
 
 	void configBiUpdate(std::string oscAddress, int param, int input = -1,
 			int atten = -1, float defaultValue = 0.f) {
-		configUpdate(oscAddress, param, input, atten, -5.f, 5.f, defaultValue);
+		configUpdate(oscAddress, param, input, atten, defaultValue, -5.f, 5.f);
 	}
 
 	void configUpdate(std::string oscAddress, int param, int input = -1,
-			int atten = -1, float minValue = 0.f,
-			float maxValue = 10.f, float defaultValue = 0.f) {
+			int atten = -1, float defaultValue = 0.f,
+			float minValue = 0.f, float maxValue = 10.f) {
 		if (param > -1)
 			configParam(param, minValue, maxValue, defaultValue, oscAddress);
 		if (atten > -1) configParam(atten, -1.f, 1.f, 0.f, oscAddress);
@@ -79,9 +94,9 @@ struct UModule : Module {
 	}
 
 	void onAdd() override {
-		instanceAddress = "instance/" + model->slug + "/" + std::to_string(id);
+		instanceAddress = "Instance/" + model->slug + "/" + std::to_string(id);
 		std::vector<OscArg> args = {model->slug.c_str(), id};
-		URack::Dispatcher::send(hostNum, "add", args);
+		URack::Dispatcher::send(hostNum, "Add", args);
 
 		// initialise last values arrays
 		// and set to -99 to force an update
@@ -93,12 +108,12 @@ struct UModule : Module {
 
 	void onRemove() override {
 		std::vector<OscArg> args = {model->slug.c_str(), id};
-		URack::Dispatcher::send(hostNum, "remove", args);
+		URack::Dispatcher::send(hostNum, "Remove", args);
 	}
 
 	void onReset() override {
 		std::vector<OscArg> args = {model->slug.c_str(), id};
-		URack::Dispatcher::send(hostNum, "reset", args);
+		URack::Dispatcher::send(hostNum, "Reset", args);
 		for (unsigned int i = 0; i < inputs.size(); i++)
 			lastInputVoltages[i] = -99;
 		for (unsigned int i = 0; i < params.size(); i++)
@@ -106,6 +121,30 @@ struct UModule : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
+		if (activateParam > -1) {
+			if (activateTrigger.process(params[activateParam].getValue() > 0.f))
+				active ^= true;
+			if (activateInput > -1)
+				if (inputs[activateInput].getVoltage() != 0)
+					active = inputs[activateInput].getVoltage() > 0.f;
+			if (activateLight > -1)
+				lights[activateLight].setBrightness(active ? 10.f : 0.f);
+			if (lastUpdateActive != active)
+				Dispatcher::send(hostNum, instanceAddress + "/Active",
+						active ? 1 : 0);
+			lastUpdateActive = active;
+		}
+
+		// for initialisation that must happen after the module is
+		// fully loaded
+		if (!initialised) {
+			Dispatcher::send(hostNum, instanceAddress + "/Active",
+					active ? 1 : 0);
+			initialised = true;
+		}
+
+		if (!active) return;
+
 		update(args);
 		updateTimer += args.sampleTime;
 
@@ -164,7 +203,7 @@ struct UModule : Module {
 							std::vector<OscArg> update = {
 								port->oscAddress.c_str(), module->id,
 								inputPort->oscAddress.c_str()};
-							std::string address = instanceAddress + "/connect";
+							std::string address = instanceAddress + "/Connect";
 							URack::Dispatcher::send(hostNum, address, update);
 
 							// Todo: Need to figure out how to replace regular
@@ -183,7 +222,7 @@ struct UModule : Module {
 							std::vector<OscArg> update = {
 								port->oscAddress.c_str()};
 							std::string address =
-								instanceAddress + "/disconnect";
+								instanceAddress + "/Disconnect";
 							URack::Dispatcher::send(hostNum, address, update);
 						}
 					}
