@@ -1,4 +1,5 @@
 #include "URack.hpp"
+#include "plugin.hpp"
 #include "settings.hpp"
 
 namespace URack {
@@ -15,10 +16,10 @@ struct UModule : Module {
 	std::vector<float> lastInputVoltages;
 
 	struct UpdateParam {
+		std::string oscAddress;
 		int param;
 		int input;
 		int atten;
-		std::string oscAddress;
 	};
 
 	std::vector<UpdateParam> updateParams;
@@ -41,7 +42,21 @@ struct UModule : Module {
 	}
 
 	void configUpdate(int param, int input, int atten, std::string oscAddress) {
-		UpdateParam updateParam = {param, input, atten, oscAddress};
+		configUpdate(oscAddress, param, input, atten);
+	}
+
+	void configBiUpdate(std::string oscAddress, int param, int input = -1,
+			int atten = -1, float defaultValue = 0.f) {
+		configUpdate(oscAddress, param, input, atten, -5.f, 5.f, defaultValue);
+	}
+
+	void configUpdate(std::string oscAddress, int param, int input = -1,
+			int atten = -1, float minValue = 0.f,
+			float maxValue = 10.f, float defaultValue = 0.f) {
+		if (param > -1)
+			configParam(param, minValue, maxValue, defaultValue, oscAddress);
+		if (atten > -1) configParam(atten, -1.f, 1.f, 0.f, oscAddress);
+		UpdateParam updateParam = {oscAddress, param, input, atten};
 		updateParams.push_back(updateParam);
 	}
 
@@ -93,6 +108,7 @@ struct UModule : Module {
 	void process(const ProcessArgs& args) override {
 		update(args);
 		updateTimer += args.sampleTime;
+
 		if (updateTimer >= OSC_UPDATE_PERIOD) {
 			// check for changed values
 			// and send updates if necessary
