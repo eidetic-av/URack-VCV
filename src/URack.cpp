@@ -19,7 +19,7 @@ int Dispatcher::create(const char* hostIp, int hostPort) {
 
 	char buffer[UDP_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
-	p << osc::BeginMessage("/dispatcher/create") << hostIp << hostPort
+	p << osc::BeginMessage("/Dispatcher/Create") << hostIp << hostPort
 		<< osc::EndMessage;
 	sockets[index].transmitSocket->Send(p.Data(), p.Size());
 
@@ -35,6 +35,10 @@ int Dispatcher::create(const char* hostIp, int hostPort) {
 }
 
 void Dispatcher::destroy(int host) {}
+
+void Dispatcher::send(int hostNum, std::string address, float value) {
+	Dispatcher::send(hostNum, address, std::vector<OscArg>{value});
+}
 
 void Dispatcher::send(int hostNum, std::string address,
 		std::vector<OscArg> args) {

@@ -4,10 +4,10 @@
 #include "plugin.hpp"
 
 /* #define LOCALHOST "172.16.1.76" */
-/* #define LOCALHOST "192.168.1.116" */
+#define LOCALHOST "192.168.1.116"
 /* #define LOCALHOST "192.168.0.100" */
 /* #define LOCALHOST "169.254.206.226" */
-#define LOCALHOST "127.0.0.1"
+/* #define LOCALHOST "127.0.0.1" */
 #define PORT 54321
 #define UDP_BUFFER_SIZE 1024
 
@@ -56,6 +56,7 @@ struct Dispatcher {
 	static int create(const char* hostIp = LOCALHOST, int hostPort = PORT);
 	static void destroy(int host);
 
+	static void send(int host, std::string address, float value);
 	static void send(int host, std::string address, std::vector<OscArg> args);
 
 	Dispatcher() {}
