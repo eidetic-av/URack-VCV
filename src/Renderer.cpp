@@ -1,5 +1,4 @@
 #include "UModule.hpp"
-#include "dsp/digital.hpp"
 
 struct Renderer : URack::UModule {
 	enum ParamIds {
@@ -53,8 +52,8 @@ struct Renderer : URack::UModule {
 		configUpdate("SpawnRateMultiplier", SPAWN_RATE_PARAM, SPAWN_RATE_INPUT,
 				SPAWN_RATE_ATTEN_PARAM, 5.f);
 		configUpdate("Size", SIZE_PARAM, SIZE_INPUT, SIZE_ATTEN_PARAM, 2.5f);
-		configUpdate("PointCount", POINT_COUNT_PARAM, POINT_COUNT_INPUT,
-				POINT_COUNT_ATTEN_PARAM, 5.f);
+		configUpdate("PointCountMultiplier", POINT_COUNT_PARAM,
+				POINT_COUNT_INPUT, POINT_COUNT_ATTEN_PARAM, 5.f);
 		configUpdate("Lifetime", LIFETIME_PARAM, LIFETIME_INPUT,
 				LIFETIME_ATTEN_PARAM, 5.f);
 		configUpdate("Noise", FUZZ_PARAM, FUZZ_INPUT, FUZZ_ATTEN_PARAM, 1.5f);
