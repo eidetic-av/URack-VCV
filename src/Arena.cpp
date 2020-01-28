@@ -1,4 +1,5 @@
 #include "UModule.hpp"
+#include "dsp/digital.hpp"
 
 struct Arena : URack::UModule {
 	enum ParamIds {
@@ -19,6 +20,8 @@ struct Arena : URack::UModule {
 		SKY_COLOR_HARMONY_PARAM,
 		SKY_COLOR_DIFFUSION_PARAM,
 		SKY_COLOR_EXPOSURE_PARAM,
+		ACTIVE_PARAM,
+		MARKER_ACTIVE_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
@@ -39,58 +42,55 @@ struct Arena : URack::UModule {
 		SKY_COLOR_HARMONY_INPUT,
 		SKY_COLOR_DIFFUSION_INPUT,
 		SKY_COLOR_EXPOSURE_INPUT,
+		ACTIVE_INPUT,
 		NUM_INPUTS
 	};
 	enum OutputIds { SINE_OUTPUT, NUM_OUTPUTS };
-	enum LightIds { BLINK_LIGHT, NUM_LIGHTS };
+	enum LightIds { ACTIVE_LIGHT, MARKER_ACTIVE_LIGHT, NUM_LIGHTS };
+
+	bool markerActive;
+	dsp::BooleanTrigger markerTrigger;
 
 	Arena() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(CAMERA_ORIGIN_X_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(LIGHT_HUE_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(SKY_COLOR_PHASE_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(SKY_COLOR_DIFFUSION_PARAM, 0.f, 10.f, 0.f, "");
-		configParam(LIGHT_SATURATION_PARAM, 0.f, 10.f, 0.f, "");
-		configParam(LIGHT_DIRECTION_X_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(CAMERA_ORIGIN_Y_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(CAMERA_ORBIT_X_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(CAMERA_ORBIT_Y_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(CAMERA_EXPOSURE_PARAM, 0.f, 10.f, 0.f, "");
-		configParam(CAMERA_ORIGIN_Z_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(CAMERA_DISTANCE_PARAM, 0.f, 10.f, 0.f, "");
-		configParam(CAMERA_FOCAL_LENGTH_PARAM, 0.f, 10.f, 5.f, "");
-		configParam(LIGHT_BRIGHTNESS_PARAM, 0.f, 10.f, 0.f, "");
-		configParam(LIGHT_DIRECTION_Y_PARAM, -5.f, 5.f, 0.f, "");
-		configParam(SKY_COLOR_HARMONY_PARAM, 0.f, 10.f, 0.f, "");
-		configParam(SKY_COLOR_EXPOSURE_PARAM, 0.f, 10.f, 0.f, "");
+		configActivate(ACTIVE_PARAM, ACTIVE_LIGHT, ACTIVE_INPUT);
 
-		configUpdate(CAMERA_ORIGIN_X_PARAM, CAMERA_ORIGIN_X_INPUT,
-				"CameraOriginX");
-		configUpdate(CAMERA_ORIGIN_Y_PARAM, CAMERA_ORIGIN_Y_INPUT,
-				"CameraOriginY");
-		configUpdate(CAMERA_ORIGIN_Z_PARAM, CAMERA_ORIGIN_Z_INPUT,
-				"CameraOriginZ");
-		configUpdate(CAMERA_DISTANCE_PARAM, CAMERA_DISTANCE_INPUT,
-				"CameraDistance");
-		configUpdate(CAMERA_ORBIT_X_PARAM, CAMERA_ORBIT_X_INPUT,
-				"CameraOrbitX");
-		configUpdate(CAMERA_ORBIT_Y_PARAM, CAMERA_ORBIT_Y_INPUT,
-				"CameraOrbitY");
-		configUpdate(CAMERA_FOCAL_LENGTH_PARAM, CAMERA_FOCAL_LENGTH_INPUT,
-				"CameraFocalLength");
-		configUpdate(LIGHT_HUE_PARAM, LIGHT_HUE_INPUT, "LightHue");
-		configUpdate(LIGHT_SATURATION_PARAM, LIGHT_SATURATION_INPUT,
-				"LightSaturation");
-		configUpdate(LIGHT_BRIGHTNESS_PARAM, LIGHT_BRIGHTNESS_INPUT,
-				"LightBrightness");
-		configUpdate(SKY_COLOR_HARMONY_PARAM, SKY_COLOR_HARMONY_INPUT,
-				"SkyColorHarmony");
-		configUpdate(SKY_COLOR_PHASE_PARAM, SKY_COLOR_PHASE_INPUT,
-				"SkyColorPhase");
-		configUpdate(SKY_COLOR_DIFFUSION_PARAM, SKY_COLOR_DIFFUSION_INPUT,
-				"SkyColorDiffusion");
-		configUpdate(SKY_COLOR_EXPOSURE_PARAM, SKY_COLOR_EXPOSURE_INPUT,
-				"SkyExposure");
+		configBiUpdate("CameraOriginX", CAMERA_ORIGIN_X_PARAM,
+				CAMERA_ORIGIN_X_INPUT);
+		configBiUpdate("CameraOriginY", CAMERA_ORIGIN_Y_PARAM,
+				CAMERA_ORIGIN_Y_INPUT);
+		configBiUpdate("CameraOriginZ", CAMERA_ORIGIN_Z_PARAM,
+				CAMERA_ORIGIN_Z_INPUT);
+
+		configUpdate("CameraDistance", CAMERA_DISTANCE_PARAM,
+				CAMERA_DISTANCE_INPUT);
+		configUpdate("CameraFocalLength", CAMERA_FOCAL_LENGTH_PARAM,
+				CAMERA_FOCAL_LENGTH_INPUT);
+
+		configBiUpdate("CameraOrbitX", CAMERA_ORBIT_X_PARAM,
+				CAMERA_ORBIT_X_INPUT);
+		configBiUpdate("CameraOrbitY", CAMERA_ORBIT_Y_PARAM,
+				CAMERA_ORBIT_Y_INPUT);
+
+		configBiUpdate("SkyColorPhase", SKY_COLOR_PHASE_PARAM,
+				SKY_COLOR_PHASE_INPUT);
+		configUpdate("SkyColorHarmony", SKY_COLOR_HARMONY_PARAM,
+				SKY_COLOR_HARMONY_INPUT);
+		configUpdate("SkyColorDiffusion", SKY_COLOR_DIFFUSION_PARAM,
+				SKY_COLOR_DIFFUSION_INPUT);
+		configUpdate("SkyExposure", SKY_COLOR_EXPOSURE_PARAM,
+				SKY_COLOR_EXPOSURE_INPUT);
+	}
+
+	void update(const ProcessArgs &args) override {
+		if (markerTrigger.process(params[MARKER_ACTIVE_PARAM].getValue() >
+					0.f)) {
+			markerActive ^= true;
+			URack::Dispatcher::send(hostNum, instanceAddress + "/MarkerEnable",
+					markerActive ? 10.f : 0.f);
+		}
+		lights[MARKER_ACTIVE_LIGHT].setBrightness(markerActive > 0.f ? 10.f
+				: 0.f);
 	}
 };
 
@@ -108,6 +108,18 @@ struct ArenaWidget : URack::UModuleWidget {
 		addChild(
 				createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH,
 						RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+		addParam(createParamCentered<LEDBezel>(mm2px(Vec(30, 5)), module,
+					Arena::ACTIVE_PARAM));
+		addChild(createLightCentered<LEDBezelLight<YellowLight>>(
+					mm2px(Vec(30, 5)), module, Arena::ACTIVE_LIGHT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(50, 5)), module,
+					Arena::ACTIVE_INPUT));
+
+		addParam(createParamCentered<LEDBezel>(mm2px(Vec(80, 5)), module,
+					Arena::MARKER_ACTIVE_PARAM));
+		addChild(createLightCentered<LEDBezelLight<RedLight>>(
+					mm2px(Vec(80, 5)), module, Arena::MARKER_ACTIVE_LIGHT));
 
 		addParam(createParamCentered<RoundBlackKnob>(
 					mm2px(Vec(99.541, 19.501)), module,
