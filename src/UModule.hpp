@@ -129,9 +129,16 @@ struct UModule : Module {
 					active = inputs[activateInput].getVoltage() > 0.f;
 			if (activateLight > -1)
 				lights[activateLight].setBrightness(active ? 10.f : 0.f);
-			if (lastUpdateActive != active)
+			if (lastUpdateActive != active) {
+				// send active status on change
 				Dispatcher::send(hostNum, instanceAddress + "/Active",
 						active ? 1 : 0);
+				// force parameter updates
+				for (unsigned int i = 0; i < inputs.size(); i++)
+					lastInputVoltages[i] = -99;
+				for (unsigned int i = 0; i < params.size(); i++)
+					lastParamValues[i] = -99;
+			}
 			lastUpdateActive = active;
 		}
 
