@@ -10,3 +10,5 @@ extern Plugin* pluginInstance;
 extern Model* modelArena;
 extern Model* modelLiveScan3D;
 extern Model* modelRenderer;
+extern Model* modelLineRenderer;
+extern Model* modelBounds;
