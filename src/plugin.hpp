@@ -12,3 +12,4 @@ extern Model* modelLiveScan3D;
 extern Model* modelRenderer;
 extern Model* modelLineRenderer;
 extern Model* modelBounds;
+extern Model* modelPointCounter;

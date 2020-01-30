@@ -1,6 +1,7 @@
 #include "URack.hpp"
 
 #include <initializer_list>
+#include <iterator>
 
 using namespace rack::logger;
 

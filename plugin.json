@@ -51,6 +51,12 @@
       "name": "Bounds",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "PointCounter",
+      "name": "PointCounter",
+      "description": "",
+      "tags": []
     }
   ]
 }

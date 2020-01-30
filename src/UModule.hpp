@@ -1,3 +1,4 @@
+#include "PointCloudPort.hpp"
 #include "URack.hpp"
 #include "dsp/digital.hpp"
 #include "plugin.hpp"
@@ -6,8 +7,10 @@
 namespace URack {
 
 struct UModule : Module {
+	static std::map<std::string, UModule*> instances;
+
 	const char* hostIp = LOCALHOST;
-	int hostPort = PORT;
+	int hostPort = SENDPORT;
 	int hostNum = 0;
 
 	std::string instanceAddress;
@@ -33,6 +36,9 @@ struct UModule : Module {
 
 	std::vector<PointCloudPortInfo> pointCloudInputs;
 	std::vector<PointCloudPortInfo> pointCloudOutputs;
+
+	std::map<std::string, int> listenerOutputs;
+	std::queue<std::tuple<int, float>> listenerUpdates;
 
 	bool initialised = false;
 
@@ -75,7 +81,11 @@ struct UModule : Module {
 		updateParams.push_back(updateParam);
 	}
 
-	void setHost(const char* ip, int port = PORT) {
+	void configListener(std::string oscAddress, int param) {
+		listenerOutputs[oscAddress] = param;
+	}
+
+	void setHost(const char* ip, int port = SENDPORT) {
 		int host = -1;
 		// if host already exists in Dispatcher, assign that
 		for (unsigned int i = 0; i < Dispatcher::sockets.size(); i++) {
@@ -93,8 +103,13 @@ struct UModule : Module {
 		hostPort = port;
 	}
 
+	void setVoltage(int output, float value) {
+		listenerUpdates.push({output, value});
+	}
+
 	void onAdd() override {
 		instanceAddress = "Instance/" + model->slug + "/" + std::to_string(id);
+		instances[instanceAddress] = this;
 		std::vector<OscArg> args = {model->slug.c_str(), id};
 		URack::Dispatcher::send(hostNum, "Add", args);
 
@@ -145,12 +160,22 @@ struct UModule : Module {
 		// for initialisation that must happen after the module is
 		// fully loaded
 		if (!initialised) {
-			Dispatcher::send(hostNum, instanceAddress + "/Active",
-					active ? 1 : 0);
+			if (activateParam > -1)
+				Dispatcher::send(hostNum, instanceAddress + "/Active",
+						active ? 1 : 0);
 			initialised = true;
 		}
 
-		if (!active) return;
+		if (activateParam > -1 && !active) return;
+
+		// set any param updates received on the OSC listener
+		while (listenerUpdates.size() > 0) {
+			auto outputUpdate = listenerUpdates.front();
+			int outputNum = std::get<0>(outputUpdate);
+			float voltage = std::get<1>(outputUpdate);
+			outputs[outputNum].setVoltage(voltage);
+			listenerUpdates.pop();
+		}
 
 		update(args);
 		updateTimer += args.sampleTime;
