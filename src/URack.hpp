@@ -5,12 +5,8 @@
 #include "../lib/oscpack/osc/OscPacketListener.h"
 #include "plugin.hpp"
 
-/* #define LOCALHOST "172.22.15.34" */
-#define LOCALHOST "172.22.15.241"
-/* #define LOCALHOST "192.168.1.116" */
-/* #define LOCALHOST "192.168.0.100" */
-/* #define LOCALHOST "169.254.206.226" */
-/* #define LOCALHOST "127.0.0.1" */
+#define LOCALHOST "127.0.0.1"
+/* #define LOCALHOST "192.168.0.1" */
 #define SENDPORT 54321
 #define LISTENPORT 54320
 #define UDP_BUFFER_SIZE 1024
@@ -49,15 +45,16 @@ struct OscArg {
 
 struct SocketInfo {
 	UdpTransmitSocket* transmitSocket;
-	const char* ip;
+	std::string ip;
 	int port;
+	int hostNum;
 };
 
 struct Dispatcher {
 	static Dispatcher instance;
-	static std::vector<SocketInfo> sockets;
+	static std::vector<SocketInfo*> sockets;
 
-	static int create(const char* hostIp = LOCALHOST, int hostPort = SENDPORT);
+	static int create(std::string hostIp = LOCALHOST, int hostPort = SENDPORT);
 	static void destroy(int host);
 
 	static void send(int host, std::string address, float value);
@@ -79,5 +76,10 @@ struct Listener {
 	static PacketListener* oscPacketListener;
 
 	static void create(int listenPort = LISTENPORT);
+};
+
+struct Settings {
+	static void load();
+	static void save();
 };
 }  // namespace URack

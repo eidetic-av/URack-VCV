@@ -1,3 +1,5 @@
+#include <arpa/inet.h>
+
 #include "PointCloudPort.hpp"
 #include "URack.hpp"
 #include "dsp/digital.hpp"
@@ -9,8 +11,6 @@ namespace URack {
 struct UModule : Module {
 	static std::map<std::string, UModule*> instances;
 
-	const char* hostIp = LOCALHOST;
-	int hostPort = SENDPORT;
 	int hostNum = 0;
 
 	std::string instanceAddress;
@@ -85,22 +85,21 @@ struct UModule : Module {
 		listenerOutputs[oscAddress] = param;
 	}
 
-	void setHost(const char* ip, int port = SENDPORT) {
+	void setHost(std::string ip, int port = SENDPORT) {
 		int host = -1;
 		// if host already exists in Dispatcher, assign that
 		for (unsigned int i = 0; i < Dispatcher::sockets.size(); i++) {
 			auto socket = Dispatcher::sockets[i];
-			if (socket.ip == ip && socket.port == port) {
+			if (socket->ip == ip && socket->port == port) {
 				host = i;
 				break;
 			}
 		}
 		// otherwise create a new one at the specified endpoint
-		if (hostNum == -1) hostNum = Dispatcher::create(ip, port);
-		// and set the UModule properties
-		hostNum = host;
-		hostIp = ip;
-		hostPort = port;
+		if (host == -1)
+			hostNum = Dispatcher::create(ip, port);
+		else
+			hostNum = host;
 	}
 
 	void setVoltage(int output, float value) {
@@ -266,6 +265,17 @@ struct UModule : Module {
 
 	// override update instead of process in implimentation
 	virtual void update(const ProcessArgs& args){};
+
+	void dataFromJson(json_t* rootJ) override {
+		json_t* hostNumJ = json_object_get(rootJ, "hostNum");
+		if (hostNumJ) hostNum = json_integer_value(hostNumJ);
+	}
+
+	json_t* dataToJson() override {
+		json_t* rootJ = json_object();
+		json_object_set_new(rootJ, "hostNum", json_integer(hostNum));
+		return rootJ;
+	}
 };
 
 struct UModuleWidget : ModuleWidget {
@@ -286,6 +296,63 @@ struct UModuleWidget : ModuleWidget {
 		port->oscAddress = oscAddress;
 		if (module)
 			module->pointCloudOutputs.push_back({outputId, false, port});
+	}
+
+	struct HostMenuItem : MenuItem {
+		UModule* module;
+		SocketInfo* socketInfo;
+		void onAction(const event::Action& e) override {
+			module->setHost(socketInfo->ip);
+		}
+	};
+
+	struct AddHostItem : TextField {
+		UModule* module;
+		Menu* menu;
+
+		AddHostItem() {
+			box.size.x = 100;
+			placeholder = "Add new host";
+		}
+
+		void onSelectKey(const event::SelectKey& e) override {
+			if (e.action == GLFW_PRESS || e.action == GLFW_REPEAT) {
+				if (e.key == GLFW_KEY_BACKSPACE) {
+					setText(text.substr(0, text.size() - 1));
+					e.consume(this);
+				} else if (e.key == GLFW_KEY_ENTER) {
+					struct sockaddr_in sa;
+					if (inet_pton(AF_INET, text.c_str(), &(sa.sin_addr)) > 0) {
+						// if the input is a valid IPv4
+						module->setHost(text.c_str());
+						menu->hide();
+					};
+					e.consume(this);
+				}
+			}
+		}
+	};
+
+	void appendContextMenu(Menu* menu) override {
+		auto module = dynamic_cast<UModule*>(this->module);
+
+		menu->addChild(new MenuEntry);
+		menu->addChild(createMenuLabel("Host select"));
+
+		for (auto socketInfo : Dispatcher::sockets) {
+			auto hostItem = new HostMenuItem;
+			hostItem->module = module;
+			hostItem->socketInfo = socketInfo;
+			hostItem->text = socketInfo->ip;
+			hostItem->rightText =
+				CHECKMARK(socketInfo->hostNum == module->hostNum);
+			menu->addChild(hostItem);
+		}
+		auto addHostItem = new AddHostItem;
+		addHostItem->module = module;
+		addHostItem->menu = menu;
+		menu->addChild(addHostItem);
+		/* menu->addChild(new AddHostItem); */
 	}
 };
 
