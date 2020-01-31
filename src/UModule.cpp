@@ -3,6 +3,7 @@
 namespace URack {
 
 std::map<std::string, URack::UModule*> URack::UModule::instances;
+int UModule::defaultHostNum = 0;
 
 void Listener::PacketListener::ProcessMessage(
 		const osc::ReceivedMessage& msg, const IpEndpointName& remoteEndpoint) {

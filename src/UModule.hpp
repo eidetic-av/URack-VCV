@@ -10,8 +10,9 @@ namespace URack {
 
 struct UModule : Module {
 	static std::map<std::string, UModule*> instances;
+	static int defaultHostNum;
 
-	int hostNum = 0;
+	int hostNum = -1;
 
 	std::string instanceAddress;
 
@@ -100,6 +101,11 @@ struct UModule : Module {
 			hostNum = Dispatcher::create(ip, port);
 		else
 			hostNum = host;
+
+		forceNetworkUpdate();
+
+		// set the default hostnum to the last chosen
+		defaultHostNum = hostNum;
 	}
 
 	void setVoltage(int output, float value) {
@@ -107,13 +113,14 @@ struct UModule : Module {
 	}
 
 	void onAdd() override {
+		if (hostNum == -1) setHost(Dispatcher::sockets[defaultHostNum]->ip);
+
 		instanceAddress = "Instance/" + model->slug + "/" + std::to_string(id);
 		instances[instanceAddress] = this;
 		std::vector<OscArg> args = {model->slug.c_str(), id};
 		URack::Dispatcher::send(hostNum, "Add", args);
 
-		// initialise last values arrays
-		// and set to -99 to force an update
+		// initialize last value arrays
 		for (unsigned int i = 0; i < inputs.size(); i++)
 			lastInputVoltages.push_back(-99);
 		for (unsigned int i = 0; i < params.size(); i++)
@@ -128,10 +135,16 @@ struct UModule : Module {
 	void onReset() override {
 		std::vector<OscArg> args = {model->slug.c_str(), id};
 		URack::Dispatcher::send(hostNum, "Reset", args);
-		for (unsigned int i = 0; i < inputs.size(); i++)
-			lastInputVoltages[i] = -99;
-		for (unsigned int i = 0; i < params.size(); i++)
-			lastParamValues[i] = -99;
+		forceNetworkUpdate();
+	}
+
+	void forceNetworkUpdate() {
+		if (lastInputVoltages.size() > 0)
+			for (unsigned int i = 0; i < inputs.size(); i++)
+				lastInputVoltages[i] = -99;
+		if (lastParamValues.size() > 0)
+			for (unsigned int i = 0; i < params.size(); i++)
+				lastParamValues[i] = -99;
 	}
 
 	void process(const ProcessArgs& args) override {
