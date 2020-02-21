@@ -68,7 +68,8 @@ void Dispatcher::send(int hostNum, std::string address,
 		}
 	}
 	p << osc::EndMessage;
-	sockets[hostNum]->transmitSocket->Send(p.Data(), p.Size());
+	if (hostNum < (int)sockets.size())
+		sockets[hostNum]->transmitSocket->Send(p.Data(), p.Size());
 }
 
 void Settings::load() {

@@ -5,8 +5,8 @@
 #include "../lib/oscpack/osc/OscPacketListener.h"
 #include "plugin.hpp"
 
-#define LOCALHOST "127.0.0.1"
-/* #define LOCALHOST "192.168.0.1" */
+/* #define LOCALHOST "127.0.0.1" */
+#define LOCALHOST "169.254.226.61"
 #define SENDPORT 54321
 #define LISTENPORT 54320
 #define UDP_BUFFER_SIZE 1024
