@@ -367,6 +367,15 @@ struct UModuleWidget : ModuleWidget {
 		menu->addChild(addHostItem);
 		/* menu->addChild(new AddHostItem); */
 	}
+
+	struct TrimpotGray : app::SvgKnob {
+		TrimpotGray() {
+			minAngle = -0.75 * M_PI;
+			maxAngle = 0.75 * M_PI;
+			setSvg(APP->window->loadSvg(
+						asset::plugin(pluginInstance, "res/TrimpotGray.svg")));
+		}
+	};
 };
 
 }  // namespace URack

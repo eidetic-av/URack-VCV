@@ -69,6 +69,12 @@
       "name": "HighestPoint",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "Drone",
+      "name": "Drone",
+      "description": "",
+      "tags": []
     }
   ]
 }

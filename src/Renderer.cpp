@@ -101,7 +101,7 @@ struct RendererWidget : URack::UModuleWidget {
 		addParam(
 				createParamCentered<Trimpot>(mm2px(Vec(8.439, 40.239)), module,
 					Renderer::POINT_COUNT_ATTEN_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(
+		addParam(createParamCentered<Davies1900hLargeWhiteKnob>(
 					mm2px(Vec(35.098, 40.849)), module, Renderer::FUZZ_PARAM));
 		addParam(createParamCentered<Davies1900hWhiteKnob>(
 					mm2px(Vec(57.871, 41.378)), module, Renderer::SIZE_PARAM));
