@@ -41,15 +41,13 @@ struct UModule : Module {
 	std::map<std::string, int> listenerOutputs;
 	std::queue<std::tuple<int, float>> listenerUpdates;
 
-	bool initialised = false;
-
 	int activateParam = -1;
 	int activateInput = -1;
 	int activateLight = -1;
 	dsp::BooleanTrigger activateTrigger;
-	bool active;
-	bool lastUpdateActive;
+	int active = 1;
 
+	bool initialised = false;
 	UModule() {}
 
 	void configActivate(int param, int light = -1, int input = -1) {
@@ -119,7 +117,6 @@ struct UModule : Module {
 		instances[instanceAddress] = this;
 		std::vector<OscArg> args = {model->slug.c_str(), id};
 		URack::Dispatcher::send(hostNum, "Add", args);
-
 		// initialize last value arrays
 		for (unsigned int i = 0; i < inputs.size(); i++)
 			lastInputVoltages.push_back(-99);
@@ -148,37 +145,32 @@ struct UModule : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
-		if (activateParam > -1) {
-			if (activateTrigger.process(params[activateParam].getValue() > 0.f))
-				active ^= true;
-			if (activateInput > -1)
-				if (inputs[activateInput].getVoltage() != 0)
-					active = inputs[activateInput].getVoltage() > 0.f;
-			if (activateLight > -1)
-				lights[activateLight].setBrightness(active ? 10.f : 0.f);
-			if (lastUpdateActive != active) {
-				// send active status on change
-				Dispatcher::send(hostNum, instanceAddress + "/Active",
-						active ? 1 : 0);
-				// force parameter updates
-				for (unsigned int i = 0; i < inputs.size(); i++)
-					lastInputVoltages[i] = -99;
-				for (unsigned int i = 0; i < params.size(); i++)
-					lastParamValues[i] = -99;
-			}
-			lastUpdateActive = active;
-		}
-
-		// for initialisation that must happen after the module is
-		// fully loaded
 		if (!initialised) {
-			if (activateParam > -1)
-				Dispatcher::send(hostNum, instanceAddress + "/Active",
-						active ? 1 : 0);
+			// any initialisation that needs to happen on first process step
+			URack::Dispatcher::send(hostNum, instanceAddress + "/Active",
+					active);
 			initialised = true;
 		}
 
-		if (activateParam > -1 && !active) return;
+		if (activateParam != 0) {
+			bool oldActive = active;
+			// if no activate input or it's not connected,
+			// use the button to determine active status
+			if (activateInput == -1 || !inputs[activateInput].isConnected()) {
+				bool activeButton = params[activateParam].getValue() > 0;
+				if (activateTrigger.process(activeButton))
+					active = active > 0 ? 0 : 1;
+			} else if (activateInput != -1 &&
+					inputs[activateInput].isConnected()) {
+				// if we have a connected activate input, ignore the button
+				float activeVoltage = inputs[activateInput].getVoltage();
+				active = activeVoltage > 0 ? 1 : 0;
+			}
+			if (oldActive != active)
+				Dispatcher::send(hostNum, instanceAddress + "/Active", active);
+		}
+		if (activateLight != -1)
+			lights[activateLight].setBrightness(active * 10.f);
 
 		// set any param updates received on the OSC listener
 		while (listenerUpdates.size() > 0) {
@@ -282,11 +274,14 @@ struct UModule : Module {
 	void dataFromJson(json_t* rootJ) override {
 		json_t* hostNumJ = json_object_get(rootJ, "hostNum");
 		if (hostNumJ) hostNum = json_integer_value(hostNumJ);
+		json_t* activeJ = json_object_get(rootJ, "active");
+		if (activeJ) active = json_integer_value(activeJ);
 	}
 
 	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
 		json_object_set_new(rootJ, "hostNum", json_integer(hostNum));
+		json_object_set_new(rootJ, "active", json_integer(active));
 		return rootJ;
 	}
 };
@@ -365,8 +360,16 @@ struct UModuleWidget : ModuleWidget {
 		addHostItem->module = module;
 		addHostItem->menu = menu;
 		menu->addChild(addHostItem);
-		/* menu->addChild(new AddHostItem); */
 	}
+
+	struct Davies1900hWhiteKnob : app::SvgKnob {
+		Davies1900hWhiteKnob() {
+			minAngle = -0.75 * M_PI;
+			maxAngle = 0.75 * M_PI;
+			setSvg(APP->window->loadSvg(
+						asset::plugin(pluginInstance, "res/Davies1900hWhite.svg")));
+		}
+	};
 
 	struct TrimpotGray : app::SvgKnob {
 		TrimpotGray() {
