@@ -16,3 +16,4 @@ extern Model* modelABBox;
 extern Model* modelPointCounter;
 extern Model* modelHighestPoint;
 extern Model* modelDrone;
+extern Model* modelHarmony;

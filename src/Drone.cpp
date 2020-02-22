@@ -53,40 +53,43 @@ struct Drone : URack::UModule {
 	}
 };
 
-
 struct DroneWidget : URack::UModuleWidget {
 	DroneWidget(Drone* module) {
 		setModule(module);
 		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Drone.svg")));
 
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(12.923, 33.702)), module, Drone::PACE_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(35.56, 33.702)), module, Drone::STRAFE_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(58.197, 33.702)), module, Drone::DISTANCE_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(7.064, 54.662)), module, Drone::PACE_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(29.701, 54.662)), module, Drone::STRAFE_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(52.339, 54.662)), module, Drone::DISTANCE_ATTEN_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(12.922, 73.97)), module, Drone::ORBIT_X_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(35.56, 73.97)), module, Drone::ORBIT_Y_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(58.197, 73.97)), module, Drone::ZOOM_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(7.064, 94.93)), module, Drone::ORBIT_X_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(29.701, 94.93)), module, Drone::ORBIT_Y_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(52.339, 94.93)), module, Drone::ZOOM_ATTEN_PARAM));
-                addParam(createParamCentered<LEDBezel>(mm2px(Vec(9.411, 109.288)), module, Drone::ACTIVE_PARAM));
-                addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(9.411, 109.288)), module, Drone::ACTIVE_LIGHT));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(17.753, 54.662)), module, Drone::PACE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.39, 54.662)), module, Drone::STRAFE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.028, 54.662)), module, Drone::DISTANCE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(17.753, 94.93)), module, Drone::ORBIT_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.39, 94.93)), module, Drone::ORBIT_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.028, 94.93)), module, Drone::ZOOM_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.963, 109.288)), module, Drone::ACTIVE_INPUT));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(12.923, 35.291)), module, Drone::PACE_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(35.56, 35.291)), module, Drone::STRAFE_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(58.197, 35.291)), module, Drone::DISTANCE_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(7.064, 56.251)), module, Drone::PACE_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(29.701, 56.251)), module, Drone::STRAFE_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(52.339, 56.251)), module, Drone::DISTANCE_ATTEN_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(12.922, 75.034)), module, Drone::ORBIT_X_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(35.56, 75.034)), module, Drone::ORBIT_Y_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(58.197, 75.034)), module, Drone::ZOOM_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(7.064, 95.994)), module, Drone::ORBIT_X_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(29.701, 95.994)), module, Drone::ORBIT_Y_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(52.339, 95.994)), module, Drone::ZOOM_ATTEN_PARAM));
+		addParam(createParamCentered<LEDBezel>(mm2px(Vec(9.411, 108.759)), module, Drone::ACTIVE_PARAM));
+		addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(9.411, 108.759)), module, Drone::ACTIVE_LIGHT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.69, 109.288)), module, Drone::X_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(49.359, 109.288)), module, Drone::Y_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.028, 109.288)), module, Drone::Z_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(17.753, 56.251)), module, Drone::PACE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.39, 56.251)), module, Drone::STRAFE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.028, 56.251)), module, Drone::DISTANCE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(17.753, 95.994)), module, Drone::ORBIT_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.39, 95.994)), module, Drone::ORBIT_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.028, 95.994)), module, Drone::ZOOM_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.963, 108.759)), module, Drone::ACTIVE_INPUT));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.69, 108.759)), module, Drone::X_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(49.359, 108.759)), module, Drone::Y_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(63.028, 108.759)), module, Drone::Z_OUTPUT));
 	}
 };
-
 
 Model* modelDrone = createModel<Drone, DroneWidget>("Drone");

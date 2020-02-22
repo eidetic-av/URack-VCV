@@ -334,7 +334,12 @@ struct {identifier} : URack::UModule {{"""
 struct {identifier}Widget : URack::UModuleWidget {{
 	{identifier}Widget({identifier}* module) {{
 		setModule(module);
-		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/{slug}.svg")));"""
+		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/{slug}.svg")));
+
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH,	RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));"""
 
 
 	# Params

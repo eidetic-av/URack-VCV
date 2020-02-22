@@ -75,6 +75,12 @@
       "name": "Drone",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "Harmony",
+      "name": "Harmony",
+      "description": "",
+      "tags": []
     }
   ]
 }

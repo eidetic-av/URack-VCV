@@ -147,8 +147,8 @@ struct UModule : Module {
 	void process(const ProcessArgs& args) override {
 		if (!initialised) {
 			// any initialisation that needs to happen on first process step
-			URack::Dispatcher::send(hostNum, instanceAddress + "/Active",
-					active);
+			URack::Dispatcher::send(hostNum, instanceAddress + "/Active", active);
+			if (activateParam != 0) params[activateParam].setValue(active);
 			initialised = true;
 		}
 
