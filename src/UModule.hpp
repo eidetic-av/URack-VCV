@@ -48,6 +48,7 @@ struct UModule : Module {
 	int active = 1;
 
 	bool initialised = false;
+
 	UModule() {}
 
 	void configActivate(int param, int light = -1, int input = -1) {
@@ -144,11 +145,14 @@ struct UModule : Module {
 				lastParamValues[i] = -99;
 	}
 
+	virtual void start() {}
+
 	void process(const ProcessArgs& args) override {
 		if (!initialised) {
 			// any initialisation that needs to happen on first process step
 			URack::Dispatcher::send(hostNum, instanceAddress + "/Active", active);
 			if (activateParam != 0) params[activateParam].setValue(active);
+			start();
 			initialised = true;
 		}
 
@@ -276,14 +280,21 @@ struct UModule : Module {
 		if (hostNumJ) hostNum = json_integer_value(hostNumJ);
 		json_t* activeJ = json_object_get(rootJ, "active");
 		if (activeJ) active = json_integer_value(activeJ);
+		json_t* childParams = json_object_get(rootJ, "childParams");
+		if (childParams) onLoad(childParams);
 	}
 
 	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
 		json_object_set_new(rootJ, "hostNum", json_integer(hostNum));
 		json_object_set_new(rootJ, "active", json_integer(active));
+		json_object_set_new(rootJ, "childParams", onSave());
 		return rootJ;
 	}
+
+	// override these instead of the regular Json methods above
+	virtual void onLoad(json_t* roojJ){};
+	virtual json_t* onSave() { return json_object(); };
 };
 
 struct UModuleWidget : ModuleWidget {
