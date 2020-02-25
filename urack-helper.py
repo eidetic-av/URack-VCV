@@ -199,6 +199,12 @@ def panel_to_components(tree):
 			c['cy'] = abs(round(cy, 3))
 
 		if color == 'ff0000':
+			c['size'] = "regular"
+			components['params'].append(c)
+			if "_atten" in name.lower():
+			    components['attens'].append(c)
+		if color == '00ffff':
+			c['size'] = "small"
 			components['params'].append(c)
 			if "_atten" in name.lower():
 			    components['attens'].append(c)
@@ -320,6 +326,11 @@ struct {identifier} : URack::UModule {{"""
 		else:
 		    source += f"""
 		configUpdate(\"{c['address']}\", {c['name']}_PARAM);"""
+	
+	for c in components['outputs']:
+		if "pointcloud" not in c['name'].lower() and "point_cloud" not in c['name'].lower():
+			source += f"""
+		configListener("{c['address']}", {c['name']}_OUTPUT);"""
 
 	source += """
 	}
@@ -355,6 +366,8 @@ struct {identifier}Widget : URack::UModuleWidget {{
                 knob = "Davies1900hWhiteKnob"
                 if "_ATTEN" in c['name']:
                         knob = "TrimpotGray"
+                if c['size'] == "small":
+                        knob = "Davies1900hSmallWhiteKnob"
                 if 'x' in c:
                         source += f"""
 		addParam(createParam<{knob}>(mm2px(Vec({c['x']}, {c['y']})), module, {identifier}::{c['name']}_PARAM));"""
@@ -366,7 +379,10 @@ struct {identifier}Widget : URack::UModuleWidget {{
 	if len(components['inputs']) > 0:
 		source += "\n"
 	for c in components['inputs']:
-		if 'x' in c:
+		if "pointcloud" in c['name'].lower() or "point_cloud" in c['name'].lower():
+			source += f"""
+		addPointCloudInput(mm2px(Vec({c['cx']}, {c['cy']})), module, {identifier}::{c['name']}_INPUT, "{c['address']}Input");"""
+		elif 'x' in c:
 			source += f"""
 		addInput(createInput<PJ301MPort>(mm2px(Vec({c['x']}, {c['y']})), module, {identifier}::{c['name']}_INPUT));"""
 		else:
@@ -377,7 +393,10 @@ struct {identifier}Widget : URack::UModuleWidget {{
 	if len(components['outputs']) > 0:
 		source += "\n"
 	for c in components['outputs']:
-		if 'x' in c:
+		if "pointcloud" in c['name'].lower() or "point_cloud" in c['name'].lower():
+			source += f"""
+		addPointCloudOutput(mm2px(Vec({c['cx']}, {c['cy']})), module, {identifier}::{c['name']}_INPUT, "{c['address']}Output");"""
+		elif 'x' in c:
 			source += f"""
 		addOutput(createOutput<PJ301MPort>(mm2px(Vec({c['x']}, {c['y']})), module, {identifier}::{c['name']}_OUTPUT));"""
 		else:

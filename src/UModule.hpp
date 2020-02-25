@@ -377,8 +377,15 @@ struct UModuleWidget : ModuleWidget {
 		Davies1900hWhiteKnob() {
 			minAngle = -0.75 * M_PI;
 			maxAngle = 0.75 * M_PI;
-			setSvg(APP->window->loadSvg(
-						asset::plugin(pluginInstance, "res/Davies1900hWhite.svg")));
+			setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Davies1900hWhite.svg")));
+		}
+	};
+
+	struct Davies1900hSmallWhiteKnob : app::SvgKnob {
+		Davies1900hSmallWhiteKnob() {
+			minAngle = -0.75 * M_PI;
+			maxAngle = 0.75 * M_PI;
+			setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Davies1900hSmallWhite.svg")));
 		}
 	};
 
@@ -386,8 +393,7 @@ struct UModuleWidget : ModuleWidget {
 		TrimpotGray() {
 			minAngle = -0.75 * M_PI;
 			maxAngle = 0.75 * M_PI;
-			setSvg(APP->window->loadSvg(
-						asset::plugin(pluginInstance, "res/TrimpotGray.svg")));
+			setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TrimpotGray.svg")));
 		}
 	};
 };
