@@ -395,7 +395,7 @@ struct {identifier}Widget : URack::UModuleWidget {{
 	for c in components['outputs']:
 		if "pointcloud" in c['name'].lower() or "point_cloud" in c['name'].lower():
 			source += f"""
-		addPointCloudOutput(mm2px(Vec({c['cx']}, {c['cy']})), module, {identifier}::{c['name']}_INPUT, "{c['address']}Output");"""
+		addPointCloudOutput(mm2px(Vec({c['cx']}, {c['cy']})), module, {identifier}::{c['name']}_OUTPUT, "{c['address']}Output");"""
 		elif 'x' in c:
 			source += f"""
 		addOutput(createOutput<PJ301MPort>(mm2px(Vec({c['x']}, {c['y']})), module, {identifier}::{c['name']}_OUTPUT));"""
