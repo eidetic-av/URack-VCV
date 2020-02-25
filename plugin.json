@@ -14,12 +14,6 @@
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "Arena",
-      "name": "Arena",
-      "description": "",
-      "tags": []
-    },
-    {
       "slug": "LiveScan3D",
       "name": "LiveScan3D",
       "description": "",
@@ -28,22 +22,6 @@
         "Camera",
         "Point Cloud",
         "Input"
-      ]
-    },
-    {
-      "slug": "Renderer",
-      "name": "Renderer",
-      "description": "",
-      "tags": [
-        "URack"
-      ]
-    },
-    {
-      "slug": "LineRenderer",
-      "name": "LineRenderer",
-      "description": "",
-      "tags": [
-        "URack"
       ]
     },
     {
@@ -79,6 +57,12 @@
     {
       "slug": "Harmony",
       "name": "Harmony",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "Billboard",
+      "name": "Billboard",
       "description": "",
       "tags": []
     }
