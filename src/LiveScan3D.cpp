@@ -2,236 +2,123 @@
 
 struct LiveScan3D : URack::UModule {
 	enum ParamIds {
-		ACTIVE_PARAM,
-		MAX_BOUNDS_X_ATTEN_PARAM,
-		MAX_BOUNDS_X_PARAM,
-		MIN_BOUNDS_X_ATTEN_PARAM,
-		MIN_BOUNDS_X_PARAM,
-		MAX_BOUNDS_Y_ATTEN_PARAM,
-		MAX_BOUNDS_Y_PARAM,
-		MIN_BOUNDS_Y_ATTEN_PARAM,
-		MIN_BOUNDS_Y_PARAM,
-		MAX_BOUNDS_Z_ATTEN_PARAM,
-		MAX_BOUNDS_Z_PARAM,
-		MIN_BOUNDS_Z_ATTEN_PARAM,
-		MIN_BOUNDS_Z_PARAM,
-		SCALE_X_PARAM,
-		SCALE_X_ATTEN_PARAM,
-		TRANSLATE_X_ATTEN_PARAM,
-		TRANSLATE_X_PARAM,
+		MIN_LOP_X_PARAM,
+		MAX_LOP_X_PARAM,
+		LOCATION_X_PARAM,
+		MIN_LOP_Y_PARAM,
+		MAX_LOP_Y_PARAM,
+		LOCATION_Y_PARAM,
+		MIN_LOP_Z_PARAM,
+		MAX_LOP_Z_PARAM,
+		LOCATION_Z_PARAM,
 		ROTATION_X_PARAM,
-		ROTATION_X_ATTEN_PARAM,
-		SCALE_Y_PARAM,
-		SCALE_Y_ATTEN_PARAM,
-		TRANSLATE_Y_ATTEN_PARAM,
-		TRANSLATE_Y_PARAM,
+		SCALING_X_PARAM,
+		ACTIVE_PARAM,
 		ROTATION_Y_PARAM,
-		ROTATION_Y_ATTEN_PARAM,
-		SCALE_Z_PARAM,
-		SCALE_Z_ATTEN_PARAM,
-		TRANSLATE_Z_ATTEN_PARAM,
-		TRANSLATE_Z_PARAM,
+		SCALING_Y_PARAM,
 		ROTATION_Z_PARAM,
-		ROTATION_Z_ATTEN_PARAM,
+		SCALING_Z_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-		ACTIVE_INPUT,
-		MAX_BOUNDS_X_INPUT,
-		MIN_BOUNDS_X_INPUT,
-		MAX_BOUNDS_Y_INPUT,
-		MIN_BOUNDS_Y_INPUT,
-		MAX_BOUNDS_Z_INPUT,
-		MIN_BOUNDS_Z_INPUT,
-		SCALE_X_INPUT,
+		MIN_LOP_X_INPUT,
+		MAX_LOP_X_INPUT,
+		LOCATION_X_INPUT,
+		MIN_LOP_Y_INPUT,
+		MAX_LOP_Y_INPUT,
+		LOCATION_Y_INPUT,
+		MIN_LOP_Z_INPUT,
+		MAX_LOP_Z_INPUT,
+		LOCATION_Z_INPUT,
 		ROTATION_X_INPUT,
-		TRANSLATE_X_INPUT,
-		SCALE_Y_INPUT,
+		SCALING_X_INPUT,
+		ACTIVE_INPUT,
 		ROTATION_Y_INPUT,
-		TRANSLATE_Y_INPUT,
-		SCALE_Z_INPUT,
+		SCALING_Y_INPUT,
 		ROTATION_Z_INPUT,
-		TRANSLATE_Z_INPUT,
+		SCALING_Z_INPUT,
 		NUM_INPUTS
 	};
-	enum OutputIds { POINT_CLOUD_OUTPUT, NEW_FRAME_OUTPUT, NUM_OUTPUTS };
-	enum LightIds { ACTIVE_LIGHT, NUM_LIGHTS };
+	enum OutputIds {
+		POINT_CLOUD_OUTPUT,
+		NUM_OUTPUTS
+	};
+	enum LightIds {
+		ACTIVE_LIGHT,
+		NUM_LIGHTS
+	};
 
 	LiveScan3D() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+		configBiUpdate("MinLopX", MIN_LOP_X_PARAM, MIN_LOP_X_INPUT, -1, -5);
+		configBiUpdate("MaxLopX", MAX_LOP_X_PARAM, MAX_LOP_X_INPUT, -1, 5);
+		configBiUpdate("LocationX", LOCATION_X_PARAM, LOCATION_X_INPUT);
+		configBiUpdate("MinLopY", MIN_LOP_Y_PARAM, MIN_LOP_Y_INPUT, -1, -5);
+		configBiUpdate("MaxLopY", MAX_LOP_Y_PARAM, MAX_LOP_Y_INPUT, -1, 5);
+		configBiUpdate("LocationY", LOCATION_Y_PARAM, LOCATION_Y_INPUT);
+		configBiUpdate("MinLopZ", MIN_LOP_Z_PARAM, MIN_LOP_Z_INPUT, -1, -5);
+		configBiUpdate("MaxLopZ", MAX_LOP_Z_PARAM, MAX_LOP_Z_INPUT, -1, 5);
+		configBiUpdate("LocationZ", LOCATION_Z_PARAM, LOCATION_Z_INPUT);
+		configBiUpdate("RotationX", ROTATION_X_PARAM, ROTATION_X_INPUT);
+		configBiUpdate("ScalingX", SCALING_X_PARAM, SCALING_X_INPUT, -1, 1);
 		configActivate(ACTIVE_PARAM, ACTIVE_LIGHT, ACTIVE_INPUT);
+		configBiUpdate("RotationY", ROTATION_Y_PARAM, ROTATION_Y_INPUT);
+		configBiUpdate("ScalingY", SCALING_Y_PARAM, SCALING_Y_INPUT, -1, 1);
+		configBiUpdate("RotationZ", ROTATION_Z_PARAM, ROTATION_Z_INPUT);
+		configBiUpdate("ScalingZ", SCALING_Z_PARAM, SCALING_Z_INPUT, -1, 1);
+	}
 
-		configBiUpdate("MaxX", MAX_BOUNDS_X_PARAM, MAX_BOUNDS_X_INPUT,
-				MAX_BOUNDS_X_ATTEN_PARAM, 5.f);
-		configBiUpdate("MaxY", MAX_BOUNDS_Y_PARAM, MAX_BOUNDS_Y_INPUT,
-				MAX_BOUNDS_Y_ATTEN_PARAM, 5.f);
-		configBiUpdate("MaxZ", MAX_BOUNDS_Z_PARAM, MAX_BOUNDS_Z_INPUT,
-				MAX_BOUNDS_Z_ATTEN_PARAM, 5.f);
-
-		configBiUpdate("MinX", MIN_BOUNDS_X_PARAM, MIN_BOUNDS_X_INPUT,
-				MIN_BOUNDS_X_ATTEN_PARAM, -5.f);
-		configBiUpdate("MinY", MIN_BOUNDS_Y_PARAM, MIN_BOUNDS_Y_INPUT,
-				MIN_BOUNDS_Y_ATTEN_PARAM, -5.f);
-		configBiUpdate("MinZ", MIN_BOUNDS_Z_PARAM, MIN_BOUNDS_Z_INPUT,
-				MIN_BOUNDS_Z_ATTEN_PARAM, -5.f);
-
-		configBiUpdate("ScaleX", SCALE_X_PARAM, SCALE_X_INPUT,
-				SCALE_X_ATTEN_PARAM, 1.f);
-		configBiUpdate("ScaleY", SCALE_Y_PARAM, SCALE_Y_INPUT,
-				SCALE_Y_ATTEN_PARAM, 1.f);
-		configBiUpdate("ScaleZ", SCALE_Z_PARAM, SCALE_Z_INPUT,
-				SCALE_Z_ATTEN_PARAM, 1.f);
-
-		configBiUpdate("TranslationX", TRANSLATE_X_PARAM, TRANSLATE_X_INPUT,
-				TRANSLATE_X_ATTEN_PARAM);
-		configBiUpdate("TranslationY", TRANSLATE_Y_PARAM, TRANSLATE_Y_INPUT,
-				TRANSLATE_Y_ATTEN_PARAM);
-		configBiUpdate("TranslationZ", TRANSLATE_Z_PARAM, TRANSLATE_Z_INPUT,
-				TRANSLATE_Z_ATTEN_PARAM);
-
-		configBiUpdate("RotationX", ROTATION_X_PARAM, ROTATION_X_INPUT,
-				ROTATION_X_ATTEN_PARAM);
-		configBiUpdate("RotationY", ROTATION_Y_PARAM, ROTATION_Y_INPUT,
-				ROTATION_Y_ATTEN_PARAM);
-		configBiUpdate("RotationZ", ROTATION_Z_PARAM, ROTATION_Z_INPUT,
-				ROTATION_Z_ATTEN_PARAM);
+	void update(const ProcessArgs& args) override {
 	}
 };
 
 struct LiveScan3DWidget : URack::UModuleWidget {
 	LiveScan3DWidget(LiveScan3D* module) {
 		setModule(module);
-		setPanel(APP->window->loadSvg(
-					asset::plugin(pluginInstance, "res/LiveScan3D.svg")));
+		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/LiveScan3D.svg")));
 
-		addParam(createParamCentered<LEDBezel>(
-					mm2px(Vec(94.932, 16.028)), module, LiveScan3D::ACTIVE_PARAM));
-		addChild(createLightCentered<LEDBezelLight<YellowLight>>(
-					mm2px(Vec(94.932, 16.028)), module, LiveScan3D::ACTIVE_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(110.729, 16.0)), module, LiveScan3D::ACTIVE_INPUT));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(64.65, 24.792)), module,
-					LiveScan3D::MAX_BOUNDS_X_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(52.535, 24.792)), module,
-					LiveScan3D::MAX_BOUNDS_X_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(16.92, 24.798)), module,
-					LiveScan3D::MIN_BOUNDS_X_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(29.035, 24.798)), module,
-					LiveScan3D::MIN_BOUNDS_X_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(64.587, 39.361)), module,
-					LiveScan3D::MAX_BOUNDS_Y_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(52.472, 39.361)), module,
-					LiveScan3D::MAX_BOUNDS_Y_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(16.983, 39.367)), module,
-					LiveScan3D::MIN_BOUNDS_Y_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(29.098, 39.367)), module,
-					LiveScan3D::MIN_BOUNDS_Y_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(64.487, 53.93)), module,
-					LiveScan3D::MAX_BOUNDS_Z_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(52.372, 53.93)), module, LiveScan3D::MAX_BOUNDS_Z_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(17.083, 53.936)), module,
-					LiveScan3D::MIN_BOUNDS_Z_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(29.198, 53.936)), module,
-					LiveScan3D::MIN_BOUNDS_Z_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(88.857, 75.871)), module, LiveScan3D::SCALE_X_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(100.972, 75.871)),
-					module,
-					LiveScan3D::SCALE_X_ATTEN_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(16.92, 76.327)), module,
-					LiveScan3D::TRANSLATE_X_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(29.035, 76.327)), module, LiveScan3D::TRANSLATE_X_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(52.571, 76.327)), module, LiveScan3D::ROTATION_X_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(64.686, 76.327)), module,
-					LiveScan3D::ROTATION_X_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(88.794, 90.439)), module, LiveScan3D::SCALE_Y_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(100.91, 90.439)),
-					module,
-					LiveScan3D::SCALE_Y_ATTEN_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(16.983, 90.895)), module,
-					LiveScan3D::TRANSLATE_Y_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(29.098, 90.895)), module, LiveScan3D::TRANSLATE_Y_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(52.508, 90.895)), module, LiveScan3D::ROTATION_Y_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(64.623, 90.895)), module,
-					LiveScan3D::ROTATION_Y_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(88.694, 105.008)), module, LiveScan3D::SCALE_Z_PARAM));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(100.809, 105.008)),
-					module,
-					LiveScan3D::SCALE_Z_ATTEN_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(17.083, 105.464)), module,
-					LiveScan3D::TRANSLATE_Z_ATTEN_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(29.198, 105.464)), module,
-					LiveScan3D::TRANSLATE_Z_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(
-					mm2px(Vec(52.408, 105.464)), module, LiveScan3D::ROTATION_Z_PARAM));
-		addParam(
-				createParamCentered<Trimpot>(mm2px(Vec(64.523, 105.464)), module,
-					LiveScan3D::ROTATION_Z_ATTEN_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.392, 32.135)), module, LiveScan3D::MIN_LOP_X_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(42.695, 32.142)), module, LiveScan3D::MAX_LOP_X_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(69.97, 32.142)), module, LiveScan3D::LOCATION_X_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.392, 45.863)), module, LiveScan3D::MIN_LOP_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(42.695, 45.871)), module, LiveScan3D::MAX_LOP_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(69.97, 45.871)), module, LiveScan3D::LOCATION_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.386, 59.6)), module, LiveScan3D::MIN_LOP_Z_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(42.695, 59.6)), module, LiveScan3D::MAX_LOP_Z_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(69.97, 59.6)), module, LiveScan3D::LOCATION_Z_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.392, 80.231)), module, LiveScan3D::ROTATION_X_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(42.695, 80.239)), module, LiveScan3D::SCALING_X_PARAM));
+		addParam(createParamCentered<LEDBezel>(mm2px(Vec(69.589, 83.967)), module, LiveScan3D::ACTIVE_PARAM));
+		addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(69.589, 83.967)), module, LiveScan3D::ACTIVE_LIGHT));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.392, 93.96)), module, LiveScan3D::ROTATION_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(42.695, 93.968)), module, LiveScan3D::SCALING_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.392, 107.689)), module, LiveScan3D::ROTATION_Z_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(42.695, 107.696)), module, LiveScan3D::SCALING_Z_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(74.4, 24.792)), module, LiveScan3D::MAX_BOUNDS_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(7.17, 24.798)), module, LiveScan3D::MIN_BOUNDS_X_INPUT));
-		addInput(
-				createInputCentered<PJ301MPort>(mm2px(Vec(74.337, 39.361)), module,
-					LiveScan3D::MAX_BOUNDS_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(7.233, 39.367)), module, LiveScan3D::MIN_BOUNDS_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(74.237, 53.93)), module, LiveScan3D::MAX_BOUNDS_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(7.333, 53.936)), module, LiveScan3D::MIN_BOUNDS_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(110.722, 75.871)), module, LiveScan3D::SCALE_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(74.436, 76.327)), module, LiveScan3D::ROTATION_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(7.17, 76.327)), module, LiveScan3D::TRANSLATE_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(110.659, 90.439)), module, LiveScan3D::SCALE_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(74.373, 90.895)), module, LiveScan3D::ROTATION_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(7.233, 90.895)), module, LiveScan3D::TRANSLATE_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(110.528, 105.008)), module, LiveScan3D::SCALE_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(74.242, 105.464)), module, LiveScan3D::ROTATION_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(
-					mm2px(Vec(7.333, 105.464)), module, LiveScan3D::TRANSLATE_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.196, 32.135)), module, LiveScan3D::MIN_LOP_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.975, 32.142)), module, LiveScan3D::MAX_LOP_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(83.25, 32.142)), module, LiveScan3D::LOCATION_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.196, 45.863)), module, LiveScan3D::MIN_LOP_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.975, 45.871)), module, LiveScan3D::MAX_LOP_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(83.25, 45.871)), module, LiveScan3D::LOCATION_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.19, 59.6)), module, LiveScan3D::MIN_LOP_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.975, 59.6)), module, LiveScan3D::MAX_LOP_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(83.25, 59.6)), module, LiveScan3D::LOCATION_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.196, 80.231)), module, LiveScan3D::ROTATION_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.975, 80.239)), module, LiveScan3D::SCALING_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(81.141, 83.967)), module, LiveScan3D::ACTIVE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.196, 93.96)), module, LiveScan3D::ROTATION_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.975, 93.968)), module, LiveScan3D::SCALING_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.196, 107.689)), module, LiveScan3D::ROTATION_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(55.975, 107.696)), module, LiveScan3D::SCALING_Z_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(
-					mm2px(Vec(12.553, 288.464)), module, LiveScan3D::NEW_FRAME_OUTPUT));
-
-		addPointCloudOutput(mm2px(Vec(104.933, 121.022)), module,
-				LiveScan3D::POINT_CLOUD_OUTPUT, "PointCloudOutput");
+		addPointCloudOutput(mm2px(Vec(75.613, 102.992)), module, LiveScan3D::POINT_CLOUD_OUTPUT, "PointCloudOutput");
 	}
 };
 
-Model* modelLiveScan3D =
-createModel<LiveScan3D, LiveScan3DWidget>("LiveScan3D");
+Model* modelLiveScan3D = createModel<LiveScan3D, LiveScan3DWidget>("LiveScan3D");
