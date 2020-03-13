@@ -65,6 +65,12 @@
       "name": "Billboard",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "Insider",
+      "name": "Insider",
+      "description": "",
+      "tags": []
     }
   ]
 }
