@@ -71,6 +71,18 @@
       "name": "Insider",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "DayTripper",
+      "name": "DayTripper",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "Ribbon",
+      "name": "Ribbon",
+      "description": "",
+      "tags": []
     }
   ]
 }

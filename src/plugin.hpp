@@ -16,3 +16,5 @@ extern Model *modelDrone;
 extern Model *modelHarmony;
 extern Model *modelBillboard;
 extern Model *modelInsider;
+extern Model *modelDayTripper;
+extern Model *modelRibbon;
