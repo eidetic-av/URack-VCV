@@ -5,8 +5,7 @@
 #include "../lib/oscpack/osc/OscPacketListener.h"
 #include "plugin.hpp"
 
-/* #define LOCALHOST "127.0.0.1" */
-#define LOCALHOST "169.254.226.61"
+#define LOCALHOST "127.0.0.1"
 #define SENDPORT 54321
 #define LISTENPORT 54320
 #define UDP_BUFFER_SIZE 1024
@@ -58,20 +57,22 @@ struct OscUpdate {
 
 struct Dispatcher {
     static Dispatcher *instance;
-
-    static void dispatch_updates(Dispatcher *instance);
-
-    std::thread oscDispatcherThread;
-    std::queue<OscUpdate *> updateQueue;
-
     static std::vector<SocketInfo *> sockets;
 
     static int connect_host(std::string hostIp = LOCALHOST,
                             int hostPort = SENDPORT);
     static void disconnect_host(int host);
 
+    static void send(std::vector<int> hosts, std::string address, float value);
+    static void send(std::vector<int> hosts, std::string address,
+                     std::vector<OscArg> args);
     static void send(int host, std::string address, float value);
     static void send(int host, std::string address, std::vector<OscArg> args);
+
+    static void dispatch_updates(Dispatcher *instance);
+
+    std::thread oscDispatcherThread;
+    std::queue<OscUpdate *> updateQueue;
 
     Dispatcher() {
         instance = this;

@@ -10,9 +10,9 @@ namespace URack {
 
     struct UModule : Module {
         static std::map<std::string, UModule*> instances;
-        static int defaultHostNum;
+        static std::vector<int> defaultHosts;
 
-        int hostNum = -1;
+        std::vector<int> activeHosts = {};
 
         std::string instanceAddress;
 
@@ -85,26 +85,36 @@ namespace URack {
             listenerOutputs[oscAddress] = param;
         }
 
-        void setHost(std::string ip, int port = SENDPORT) {
-            int host = -1;
+        void activateHost(std::string ip, int port = SENDPORT) {
+            bool existingHost = false;
             // if host already exists in Dispatcher, assign that
             for (unsigned int i = 0; i < Dispatcher::sockets.size(); i++) {
                 auto socket = Dispatcher::sockets[i];
                 if (socket->ip == ip && socket->port == port) {
-                    host = i;
+                    activeHosts.push_back(i);
+                    existingHost = true;
                     break;
                 }
             }
-            // otherwise create a new one at the specified endpoint
-            if (host == -1)
-                hostNum = Dispatcher::connect_host(ip, port);
-            else
-                hostNum = host;
+            // if the socket doesn't exist, open a new one
+            if (!existingHost)
+                activeHosts.push_back(Dispatcher::connect_host(ip, port));
 
             forceNetworkUpdate();
 
-            // set the default hostnum to the last chosen
-            defaultHostNum = hostNum;
+            // update the default host list so that each new module
+            // automatically connects to the same hosts as the last one set
+            defaultHosts = activeHosts;
+        }
+
+        void deactivateHost(std::string ip, int port = SENDPORT) {
+            for (unsigned int i = 0; i < Dispatcher::sockets.size(); i++) {
+                auto socket = Dispatcher::sockets[i];
+                if (socket->ip == ip && socket->port == port) {
+                    activeHosts.erase(std::remove(activeHosts.begin(), activeHosts.end(), socket->hostNum), activeHosts.end());
+                    break;
+                }
+            }
         }
 
         void setVoltage(int output, float value) {
@@ -112,12 +122,15 @@ namespace URack {
         }
 
         void onAdd() override {
-            if (hostNum == -1) setHost(Dispatcher::sockets[defaultHostNum]->ip);
+            if (activeHosts.size() == 0)
+                for (int host : defaultHosts)
+                    activateHost(Dispatcher::sockets[host]->ip);
 
             instanceAddress = "Instance/" + model->slug + "/" + std::to_string(id);
             instances[instanceAddress] = this;
             std::vector<OscArg> args = {model->slug.c_str(), id};
-            URack::Dispatcher::send(hostNum, "Add", args);
+            URack::Dispatcher::send(activeHosts, "Add", args);
+
             // initialize last value arrays
             for (unsigned int i = 0; i < inputs.size(); i++)
                 lastInputVoltages.push_back(-99);
@@ -127,12 +140,12 @@ namespace URack {
 
         void onRemove() override {
             std::vector<OscArg> args = {model->slug.c_str(), id};
-            URack::Dispatcher::send(hostNum, "Remove", args);
+            URack::Dispatcher::send(activeHosts, "Remove", args);
         }
 
         void onReset() override {
             std::vector<OscArg> args = {model->slug.c_str(), id};
-            URack::Dispatcher::send(hostNum, "Reset", args);
+            URack::Dispatcher::send(activeHosts, "Reset", args);
             forceNetworkUpdate();
         }
 
@@ -150,7 +163,7 @@ namespace URack {
         void process(const ProcessArgs& args) override {
             if (!initialised) {
                 // any initialisation that needs to happen on first process step
-                URack::Dispatcher::send(hostNum, instanceAddress + "/Active", active);
+                URack::Dispatcher::send(activeHosts, instanceAddress + "/Active", active);
                 if (activateParam != 0) params[activateParam].setValue(active);
                 start();
                 initialised = true;
@@ -171,7 +184,7 @@ namespace URack {
                     active = activeVoltage > 0 ? 1 : 0;
                 }
                 if (oldActive != active)
-                    Dispatcher::send(hostNum, instanceAddress + "/Active", active);
+                    Dispatcher::send(activeHosts, instanceAddress + "/Active", active);
             }
             if (activateLight != -1)
                 lights[activateLight].setBrightness(active * 10.f);
@@ -186,7 +199,9 @@ namespace URack {
             }
         
             update(args);
-            updateTimer += args.sampleTime;
+        
+            if (active)
+                updateTimer += args.sampleTime;
         
             if (updateTimer >= OSC_UPDATE_PERIOD) {
                 // check for changed values
@@ -210,7 +225,7 @@ namespace URack {
                         std::vector<OscArg> update = {value + voltage};
                         std::string address =
                             instanceAddress + "/" + updateParams[i].oscAddress;
-                        URack::Dispatcher::send(hostNum, address, update);
+                        URack::Dispatcher::send(activeHosts, address, update);
                         // store the values for the next frame
                         // so that we only send when there is a change
                         lastParamValues[i] = value;
@@ -243,7 +258,7 @@ namespace URack {
                                 port->oscAddress.c_str(), module->id,
                                 inputPort->oscAddress.c_str()};
                                 std::string address = instanceAddress + "/Connect";
-                                URack::Dispatcher::send(hostNum, address, update);
+                                URack::Dispatcher::send(activeHosts, address, update);
         
                                 // Todo: Need to figure out how to replace regular
                                 // cables that are loaded on serialization with
@@ -262,7 +277,7 @@ namespace URack {
                                 port->oscAddress.c_str()};
                                 std::string address =
                                     instanceAddress + "/Disconnect";
-                                URack::Dispatcher::send(hostNum, address, update);
+                                URack::Dispatcher::send(activeHosts, address, update);
                             }
                         }
                     }
@@ -272,12 +287,18 @@ namespace URack {
         }
         
 
-        // override update instead of process in implimentation
+          // override update instead of process in implimentation
         virtual void update(const ProcessArgs& args){};
 
         void dataFromJson(json_t* rootJ) override {
-            json_t* hostNumJ = json_object_get(rootJ, "hostNum");
-            if (hostNumJ) hostNum = json_integer_value(hostNumJ);
+            json_t* activeHostsJ = json_object_get(rootJ, "activeHosts");
+            if (activeHostsJ) {
+                int i = 0;
+                while (json_array_get(activeHostsJ, i) != NULL) {
+                    activeHosts.push_back(json_integer_value(json_array_get(activeHostsJ, i)));
+                    i++;
+                }
+            }
             json_t* activeJ = json_object_get(rootJ, "active");
             if (activeJ) active = json_integer_value(activeJ);
             json_t* childParams = json_object_get(rootJ, "childParams");
@@ -286,7 +307,12 @@ namespace URack {
 
         json_t* dataToJson() override {
             json_t* rootJ = json_object();
-            json_object_set_new(rootJ, "hostNum", json_integer(hostNum));
+
+            json_t* activeHostsJ = json_array();
+            for (int host : activeHosts)
+                json_array_append_new(activeHostsJ, json_integer(host));
+            json_object_set_new(rootJ, "activeHosts", activeHostsJ);
+
             json_object_set_new(rootJ, "active", json_integer(active));
             json_object_set_new(rootJ, "childParams", onSave());
             return rootJ;
@@ -320,8 +346,12 @@ namespace URack {
         struct HostMenuItem : MenuItem {
             UModule* module;
             SocketInfo* socketInfo;
+            bool active;
             void onAction(const event::Action& e) override {
-                module->setHost(socketInfo->ip);
+                if (!active)
+                    module->activateHost(socketInfo->ip);
+                else
+                    module->deactivateHost(socketInfo->ip);
             }
         };
 
@@ -343,7 +373,7 @@ namespace URack {
                         struct sockaddr_in sa;
                         if (inet_pton(AF_INET, text.c_str(), &(sa.sin_addr)) > 0) {
                             // if the input is a valid IPv4
-                            module->setHost(text.c_str());
+                            module->activateHost(text.c_str());
                             menu->hide();
                         };
                         e.consume(this);
@@ -354,17 +384,23 @@ namespace URack {
 
         void appendContextMenu(Menu* menu) override {
             auto module = dynamic_cast<UModule*>(this->module);
-
+        
             menu->addChild(new MenuEntry);
-            menu->addChild(createMenuLabel("Host select"));
-
+            menu->addChild(createMenuLabel("Connect hosts"));
+        
+            auto activeHosts = module->activeHosts;
+        
             for (auto socketInfo : Dispatcher::sockets) {
                 auto hostItem = new HostMenuItem;
                 hostItem->module = module;
                 hostItem->socketInfo = socketInfo;
                 hostItem->text = socketInfo->ip;
-                hostItem->rightText =
-                    CHECKMARK(socketInfo->hostNum == module->hostNum);
+                if (std::count(activeHosts.begin(), activeHosts.end(), socketInfo->hostNum)) {
+                    hostItem->active = true;
+                    hostItem->rightText = CHECKMARK(true);
+                } else
+                    hostItem->active = false;
+        
                 menu->addChild(hostItem);
             }
             auto addHostItem = new AddHostItem;

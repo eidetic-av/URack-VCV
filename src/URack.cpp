@@ -9,7 +9,7 @@ using namespace rack::logger;
 namespace URack {
 
 Dispatcher *Dispatcher::instance;
-std::vector<SocketInfo *> Dispatcher::sockets = {};
+std::vector<SocketInfo *> Dispatcher::sockets;
 
 void Dispatcher::dispatch_updates(Dispatcher *instance) {
     while (true) {
@@ -39,8 +39,9 @@ void Dispatcher::dispatch_updates(Dispatcher *instance) {
                 }
             }
             p << osc::EndMessage;
-            if (hostNum < (int)sockets.size())
-                sockets[hostNum]->transmitSocket->Send(p.Data(), p.Size());
+            if (hostNum < (int)Dispatcher::sockets.size())
+                Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
+                                                                   p.Size());
 
             instance->updateQueue.pop();
             delete update;
@@ -54,7 +55,7 @@ int Dispatcher::connect_host(std::string hostIp, int hostPort) {
     if (Dispatcher::instance == NULL)
         Dispatcher::instance = new Dispatcher();
 
-    int index = sockets.size();
+    int index = Dispatcher::sockets.size();
 
     auto socketInfo = new SocketInfo;
     socketInfo->transmitSocket =
@@ -63,13 +64,13 @@ int Dispatcher::connect_host(std::string hostIp, int hostPort) {
     socketInfo->port = hostPort;
     socketInfo->hostNum = index;
 
-    sockets.push_back(socketInfo);
+    Dispatcher::sockets.push_back(socketInfo);
 
     char buffer[UDP_BUFFER_SIZE];
     osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
     p << osc::BeginMessage("/Dispatcher/Create") << hostIp.c_str() << hostPort
       << osc::EndMessage;
-    sockets[index]->transmitSocket->Send(p.Data(), p.Size());
+    Dispatcher::sockets[index]->transmitSocket->Send(p.Data(), p.Size());
 
     std::string msg = "Added host entry " + std::to_string(index) + " at ";
     msg += hostIp;
@@ -83,6 +84,18 @@ int Dispatcher::connect_host(std::string hostIp, int hostPort) {
 }
 
 void Dispatcher::disconnect_host(int host) {}
+
+void Dispatcher::send(std::vector<int> hosts, std::string address,
+                      float value) {
+    for (int host : hosts)
+        Dispatcher::send(host, address, value);
+}
+
+void Dispatcher::send(std::vector<int> hosts, std::string address,
+                      std::vector<OscArg> value) {
+    for (int host : hosts)
+        Dispatcher::send(host, address, value);
+}
 
 void Dispatcher::send(int hostNum, std::string address, float value) {
     Dispatcher::send(hostNum, address, std::vector<OscArg>{value});
