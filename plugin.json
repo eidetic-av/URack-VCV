@@ -79,10 +79,12 @@
       "tags": []
     },
     {
-      "slug": "Ribbon",
-      "name": "Ribbon",
-      "description": "",
-      "tags": []
+      "slug": "GlowWorm",
+      "name": "Glow-worm",
+      "description": "Generate dancing neon trails",
+      "tags": [
+        "visual"
+      ]
     }
   ]
 }

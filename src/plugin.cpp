@@ -18,7 +18,7 @@ void init(Plugin *p) {
     p->addModel(modelBillboard);
     p->addModel(modelInsider);
     p->addModel(modelDayTripper);
-    p->addModel(modelRibbon);
+    p->addModel(modelGlowWorm);
 
     // load plugin-wide settings
     URack::Settings::load();
