@@ -19,6 +19,7 @@ void init(Plugin *p) {
     p->addModel(modelInsider);
     p->addModel(modelDayTripper);
     p->addModel(modelGlowWorm);
+    p->addModel(modelMirage2x);
 
     // load plugin-wide settings
     URack::Settings::load();

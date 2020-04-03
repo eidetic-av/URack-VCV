@@ -85,6 +85,14 @@
       "tags": [
         "visual"
       ]
+    },
+    {
+      "slug": "Mirage2x",
+      "name": "Mirage-2X",
+      "description": "Blend and manipulate 2x texture clouds",
+      "tags": [
+        "visual"
+      ]
     }
   ]
 }
