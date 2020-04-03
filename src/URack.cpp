@@ -2,58 +2,22 @@
 
 #include <initializer_list>
 #include <iterator>
+#include <mutex>
 #include <tuple>
 
 using namespace rack::logger;
 
 namespace URack {
 
-Dispatcher *Dispatcher::instance;
 std::vector<SocketInfo *> Dispatcher::sockets;
 
-void Dispatcher::dispatch_updates(Dispatcher *instance) {
-    while (true) {
-        // send OSC updates at 1000Hz
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-        while (instance->updateQueue.size() > 0) {
-            auto update = instance->updateQueue.front();
-            auto hostNum = update->hostNum;
-            auto address = update->address;
-            auto args = update->args;
-
-            char buffer[UDP_BUFFER_SIZE];
-            osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
-            p << osc::BeginMessage(address.c_str());
-            for (unsigned int i = 0; i < args.size(); i++) {
-                switch (args[i].get_type()) {
-                case OscArg::Int:
-                    p << args[i].get_int();
-                    break;
-                case OscArg::Float:
-                    p << args[i].get_float();
-                    break;
-                case OscArg::String:
-                    p << args[i].get_string();
-                    break;
-                }
-            }
-            p << osc::EndMessage;
-            if (hostNum < (int)Dispatcher::sockets.size())
-                Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
-                                                                   p.Size());
-
-            instance->updateQueue.pop();
-            delete update;
-        }
-    }
-}
+bool Dispatcher::instantiated = false;
 
 int Dispatcher::connect_host(std::string hostIp, int hostPort) {
     // if a Dispatcher doesn't exist on the first attempt at connection,
     // instantiate the dispatcher to start the OSC message updates
-    if (Dispatcher::instance == NULL)
-        Dispatcher::instance = new Dispatcher();
+    if (!Dispatcher::instantiated)
+        new Dispatcher();
 
     int index = Dispatcher::sockets.size();
 
@@ -85,6 +49,9 @@ int Dispatcher::connect_host(std::string hostIp, int hostPort) {
 
 void Dispatcher::disconnect_host(int host) {}
 
+std::vector<OscUpdate *> Dispatcher::updateQueue;
+std::mutex updateMutex;
+
 void Dispatcher::send(std::vector<int> hosts, std::string address,
                       float value) {
     for (int host : hosts)
@@ -103,11 +70,48 @@ void Dispatcher::send(int hostNum, std::string address, float value) {
 
 void Dispatcher::send(int hostNum, std::string address,
                       std::vector<OscArg> args) {
+    std::lock_guard<std::mutex> guard(updateMutex);
     auto update = new OscUpdate;
     update->hostNum = hostNum;
     update->address = address;
     update->args = args;
-    Dispatcher::instance->updateQueue.push(update);
+    Dispatcher::updateQueue.push_back(update);
+}
+
+void Dispatcher::dispatchUpdates() {
+    while (true) {
+        // send OSC updates at 1000Hz
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::lock_guard<std::mutex> guard(updateMutex);
+
+        for (auto update : updateQueue) {
+            auto hostNum = update->hostNum;
+            auto address = update->address;
+            auto args = update->args;
+
+            char buffer[UDP_BUFFER_SIZE];
+            osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+            p << osc::BeginMessage(address.c_str());
+            for (unsigned int i = 0; i < args.size(); i++) {
+                switch (args[i].get_type()) {
+                case OscArg::Int:
+                    p << args[i].get_int();
+                    break;
+                case OscArg::Float:
+                    p << args[i].get_float();
+                    break;
+                case OscArg::String:
+                    p << args[i].get_string();
+                    break;
+                }
+            }
+            p << osc::EndMessage;
+            if (hostNum < (int)Dispatcher::sockets.size())
+                Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
+                                                                   p.Size());
+        }
+        updateQueue.clear();
+    }
 }
 
 UdpListeningReceiveSocket *Listener::receiveSocket = NULL;

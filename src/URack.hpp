@@ -56,8 +56,10 @@ struct OscUpdate {
 };
 
 struct Dispatcher {
-    static Dispatcher *instance;
+    static bool instantiated;
+
     static std::vector<SocketInfo *> sockets;
+    static std::vector<OscUpdate *> updateQueue;
 
     static int connect_host(std::string hostIp = LOCALHOST,
                             int hostPort = SENDPORT);
@@ -69,16 +71,15 @@ struct Dispatcher {
     static void send(int host, std::string address, float value);
     static void send(int host, std::string address, std::vector<OscArg> args);
 
-    static void dispatch_updates(Dispatcher *instance);
+    static void dispatchUpdates();
 
     std::thread oscDispatcherThread;
-    std::queue<OscUpdate *> updateQueue;
 
     Dispatcher() {
-        instance = this;
         // start the osc update thread
-        oscDispatcherThread = std::thread(&dispatch_updates, instance);
+        oscDispatcherThread = std::thread(&dispatchUpdates);
         oscDispatcherThread.detach();
+        instantiated = true;
     }
 };
 
