@@ -2,52 +2,74 @@
 
 struct Mirage2x : URack::UModule {
 	enum ParamIds {
-		WARP_DISTANCE_ATTEN_PARAM,
+		ACTIVE_PARAM,
+		GLOW_ATTEN_PARAM,
+		SIMULATION_SPEED_ATTEN_PARAM,
 		TURBULENCE_AMOUNT_ATTEN_PARAM,
-		TURBULENCE_FREQUENCY_ATTEN_PARAM,
+		WARP_DISTANCE_ATTEN_PARAM,
+		TURBULENCE_X_SCALE_PARAM,
 		WARP_X_EULER_PARAM,
-		WARP_DISTANCE_PARAM,
+		GLOW_PARAM,
+		SIMULATION_SPEED_PARAM,
 		TURBULENCE_AMOUNT_PARAM,
-		TURBULENCE_FREQUENCY_PARAM,
+		WARP_DISTANCE_PARAM,
+		TURBULENCE_X_SCALE_ATTEN_PARAM,
 		WARP_X_EULER_ATTEN_PARAM,
+		PARTICLE_SIZE_ATTEN_PARAM,
+		PARTICLE_SHAPE_ATTEN_PARAM,
+		TURBULENCE_FREQUENCY_ATTEN_PARAM,
 		WARP_SHARD_ATTEN_PARAM,
-		TURBULENCE_X_PARAM,
-		TURBULENCE_Y_PARAM,
-		TURBULENCE_Z_PARAM,
+		PARTICLE_SIZE_PARAM,
+		PARTICLE_SHAPE_PARAM,
+		TURBULENCE_Y_SCALE_PARAM,
 		WARP_Y_EULER_PARAM,
+		TURBULENCE_FREQUENCY_PARAM,
 		WARP_SHARD_PARAM,
-		TURBULENCE_X_ATTEN_PARAM,
-		TURBULENCE_Y_ATTEN_PARAM,
-		TURBULENCE_Z_ATTEN_PARAM,
+		TURBULENCE_Y_SCALE_ATTEN_PARAM,
 		WARP_Y_EULER_ATTEN_PARAM,
+		POSITION_X_PARAM,
+		POSITION_Y_PARAM,
+		POSITION_Z_PARAM,
 		TEXTURE_SELECT_A_ATTEN_PARAM,
 		TEXTURE_SELECT_B_ATTEN_PARAM,
-		GLOW_PARAM,
+		ROTATION_X_PARAM,
+		ROTATION_Y_PARAM,
+		ROTATION_Z_PARAM,
 		TEXTURE_SELECT_A_PARAM,
 		TEXTURE_SELECT_B_PARAM,
-		ACTIVE_PARAM,
+		GAIN_RED_PARAM,
+		GAIN_GREEN_PARAM,
+		GAIN_BLUE_PARAM,
 		TEXTURE_SCALE_PARAM,
-		SIMULATION_SPEED_PARAM,
 		TEXTURE_SCALE_ATTEN_PARAM,
-		SIMULATION_SPEED_ATTEN_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-		WARP_DISTANCE_INPUT,
-		TURBULENCE_AMOUNT_INPUT,
-		TURBULENCE_FREQUENCY_INPUT,
-		LENGTH_INPUT,
-		WARP_SHARD_INPUT,
-		TURBULENCE_X_INPUT,
-		TURBULENCE_Y_INPUT,
-		TURBULENCE_Z_INPUT,
-		WARP_Y_EULER_INPUT,
+		ACTIVE_INPUT,
 		GLOW_INPUT,
+		SIMULATION_SPEED_INPUT,
+		TURBULENCE_AMOUNT_INPUT,
+		WARP_DISTANCE_INPUT,
+		TURBULENCE_X_SCALE_INPUT,
+		LENGTH_INPUT,
+		PARTICLE_SIZE_INPUT,
+		PARTICLE_SHAPE_INPUT,
+		TURBULENCE_FREQUENCY_INPUT,
+		WARP_SHARD_INPUT,
+		TURBULENCE_Y_SCALE_INPUT,
+		WARP_Y_EULER_INPUT,
+		POSITION_X_INPUT,
+		POSITION_Y_INPUT,
+		POSITION_Z_INPUT,
+		ROTATION_X_INPUT,
+		ROTATION_Y_INPUT,
+		ROTATION_Z_INPUT,
 		TEXTURE_SELECT_A_INPUT,
 		TEXTURE_SELECT_B_INPUT,
-		ACTIVE_INPUT,
+		GAIN_RED_INPUT,
+		GAIN_GREEN_INPUT,
+		GAIN_BLUE_INPUT,
 		TEXTURE_SCALE_INPUT,
-		SIMULATION_SPEED_INPUT,
 		NUM_INPUTS
 	};
 	enum OutputIds {
@@ -60,21 +82,31 @@ struct Mirage2x : URack::UModule {
 
 	Mirage2x() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+		configActivate(ACTIVE_PARAM, ACTIVE_LIGHT, ACTIVE_INPUT);
+		configUpdate("TurbulenceXScale", TURBULENCE_X_SCALE_PARAM, TURBULENCE_X_SCALE_INPUT, TURBULENCE_X_SCALE_ATTEN_PARAM, 0.f);
 		configUpdate("WarpXEuler", WARP_X_EULER_PARAM);
-		configUpdate("WarpDistance", WARP_DISTANCE_PARAM, WARP_DISTANCE_INPUT, WARP_DISTANCE_ATTEN_PARAM, 0.f);
+		configUpdate("Glow", GLOW_PARAM, GLOW_INPUT, GLOW_ATTEN_PARAM, 0.f);
+		configUpdate("SimulationSpeed", SIMULATION_SPEED_PARAM, SIMULATION_SPEED_INPUT, SIMULATION_SPEED_ATTEN_PARAM, 0.f);
 		configUpdate("TurbulenceAmount", TURBULENCE_AMOUNT_PARAM, TURBULENCE_AMOUNT_INPUT, TURBULENCE_AMOUNT_ATTEN_PARAM, 0.f);
-		configUpdate("TurbulenceFrequency", TURBULENCE_FREQUENCY_PARAM, TURBULENCE_FREQUENCY_INPUT, TURBULENCE_FREQUENCY_ATTEN_PARAM, 0.f);
-		configUpdate("TurbulenceX", TURBULENCE_X_PARAM, TURBULENCE_X_INPUT, TURBULENCE_X_ATTEN_PARAM, 0.f);
-		configUpdate("TurbulenceY", TURBULENCE_Y_PARAM, TURBULENCE_Y_INPUT, TURBULENCE_Y_ATTEN_PARAM, 0.f);
-		configUpdate("TurbulenceZ", TURBULENCE_Z_PARAM, TURBULENCE_Z_INPUT, TURBULENCE_Z_ATTEN_PARAM, 0.f);
+		configBiUpdate("WarpDistance", WARP_DISTANCE_PARAM, WARP_DISTANCE_INPUT, WARP_DISTANCE_ATTEN_PARAM, 0.f);
+		configUpdate("ParticleSize", PARTICLE_SIZE_PARAM, PARTICLE_SIZE_INPUT, PARTICLE_SIZE_ATTEN_PARAM, 0.f);
+		configUpdate("ParticleShape", PARTICLE_SHAPE_PARAM, PARTICLE_SHAPE_INPUT, PARTICLE_SHAPE_ATTEN_PARAM, 0.f);
+		configUpdate("TurbulenceYScale", TURBULENCE_Y_SCALE_PARAM, TURBULENCE_Y_SCALE_INPUT, TURBULENCE_Y_SCALE_ATTEN_PARAM, 0.f);
 		configUpdate("WarpYEuler", WARP_Y_EULER_PARAM, WARP_Y_EULER_INPUT, WARP_Y_EULER_ATTEN_PARAM, 0.f);
+		configUpdate("TurbulenceFrequency", TURBULENCE_FREQUENCY_PARAM, TURBULENCE_FREQUENCY_INPUT, TURBULENCE_FREQUENCY_ATTEN_PARAM, 0.f);
 		configUpdate("WarpShard", WARP_SHARD_PARAM, WARP_SHARD_INPUT, WARP_SHARD_ATTEN_PARAM, 0.f);
-		configUpdate("Glow", GLOW_PARAM, GLOW_INPUT);
+		configBiUpdate("PositionX", POSITION_X_PARAM, POSITION_X_INPUT);
+		configBiUpdate("PositionY", POSITION_Y_PARAM, POSITION_Y_INPUT);
+		configBiUpdate("PositionZ", POSITION_Z_PARAM, POSITION_Z_INPUT);
+		configBiUpdate("RotationX", ROTATION_X_PARAM, ROTATION_X_INPUT);
+		configBiUpdate("RotationY", ROTATION_Y_PARAM, ROTATION_Y_INPUT);
+		configBiUpdate("RotationZ", ROTATION_Z_PARAM, ROTATION_Z_INPUT);
 		configUpdate("TextureSelectA", TEXTURE_SELECT_A_PARAM, TEXTURE_SELECT_A_INPUT, TEXTURE_SELECT_A_ATTEN_PARAM, 0.f);
 		configUpdate("TextureSelectB", TEXTURE_SELECT_B_PARAM, TEXTURE_SELECT_B_INPUT, TEXTURE_SELECT_B_ATTEN_PARAM, 0.f);
-		configActivate(ACTIVE_PARAM, ACTIVE_LIGHT, ACTIVE_INPUT);
+		configBiUpdate("GainRed", GAIN_RED_PARAM, GAIN_RED_INPUT);
+		configBiUpdate("GainGreen", GAIN_GREEN_PARAM, GAIN_GREEN_INPUT);
+		configBiUpdate("GainBlue", GAIN_BLUE_PARAM, GAIN_BLUE_INPUT);
 		configUpdate("TextureScale", TEXTURE_SCALE_PARAM, TEXTURE_SCALE_INPUT, TEXTURE_SCALE_ATTEN_PARAM, 0.f);
-		configUpdate("SimulationSpeed", SIMULATION_SPEED_PARAM, SIMULATION_SPEED_INPUT, SIMULATION_SPEED_ATTEN_PARAM, 0.f);
 	}
 
 	void update(const ProcessArgs& args) override {
@@ -92,51 +124,73 @@ struct Mirage2xWidget : URack::UModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH,	RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(97.013, 33.848)), module, Mirage2x::WARP_DISTANCE_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(16.076, 35.965)), module, Mirage2x::TURBULENCE_AMOUNT_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(48.049, 36.639)), module, Mirage2x::TURBULENCE_FREQUENCY_ATTEN_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(115.52, 37.6)), module, Mirage2x::WARP_X_EULER_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(85.298, 40.238)), module, Mirage2x::WARP_DISTANCE_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(27.791, 42.355)), module, Mirage2x::TURBULENCE_AMOUNT_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(59.764, 43.029)), module, Mirage2x::TURBULENCE_FREQUENCY_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(110.328, 47.045)), module, Mirage2x::WARP_X_EULER_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(97.013, 57.948)), module, Mirage2x::WARP_SHARD_ATTEN_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(16.382, 61.168)), module, Mirage2x::TURBULENCE_X_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(37.759, 61.168)), module, Mirage2x::TURBULENCE_Y_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(58.757, 61.168)), module, Mirage2x::TURBULENCE_Z_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(115.52, 61.7)), module, Mirage2x::WARP_Y_EULER_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(85.298, 64.338)), module, Mirage2x::WARP_SHARD_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(21.574, 70.613)), module, Mirage2x::TURBULENCE_X_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(42.951, 70.613)), module, Mirage2x::TURBULENCE_Y_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(63.949, 70.613)), module, Mirage2x::TURBULENCE_Z_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(110.328, 71.146)), module, Mirage2x::WARP_Y_EULER_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(14.552, 97.233)), module, Mirage2x::TEXTURE_SELECT_A_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(87.312, 97.233)), module, Mirage2x::TEXTURE_SELECT_B_ATTEN_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(109.82, 98.549)), module, Mirage2x::GLOW_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(26.267, 103.623)), module, Mirage2x::TEXTURE_SELECT_A_PARAM));
-		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(75.597, 103.623)), module, Mirage2x::TEXTURE_SELECT_B_PARAM));
-                addParam(createParamCentered<LEDBezel>(mm2px(Vec(109.889, 118.282)), module, Mirage2x::ACTIVE_PARAM));
-                addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(109.889, 118.282)), module, Mirage2x::ACTIVE_LIGHT));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(30.557, 119.348)), module, Mirage2x::TEXTURE_SCALE_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(71.307, 119.348)), module, Mirage2x::SIMULATION_SPEED_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(19.843, 119.654)), module, Mirage2x::TEXTURE_SCALE_ATTEN_PARAM));
-		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(82.02, 119.654)), module, Mirage2x::SIMULATION_SPEED_ATTEN_PARAM));
+                addParam(createParamCentered<LEDBezel>(mm2px(Vec(160.375, 10.44)), module, Mirage2x::ACTIVE_PARAM));
+                addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(160.375, 10.44)), module, Mirage2x::ACTIVE_LIGHT));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(136.802, 36.703)), module, Mirage2x::GLOW_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(167.35, 36.703)), module, Mirage2x::SIMULATION_SPEED_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(25.122, 37.758)), module, Mirage2x::TURBULENCE_AMOUNT_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(81.421, 37.758)), module, Mirage2x::WARP_DISTANCE_ATTEN_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(43.629, 41.51)), module, Mirage2x::TURBULENCE_X_SCALE_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(99.928, 41.51)), module, Mirage2x::WARP_X_EULER_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(125.086, 43.093)), module, Mirage2x::GLOW_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(155.635, 43.093)), module, Mirage2x::SIMULATION_SPEED_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(13.406, 44.148)), module, Mirage2x::TURBULENCE_AMOUNT_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(69.705, 44.148)), module, Mirage2x::WARP_DISTANCE_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(38.437, 50.956)), module, Mirage2x::TURBULENCE_X_SCALE_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(94.736, 50.956)), module, Mirage2x::WARP_X_EULER_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(136.802, 58.158)), module, Mirage2x::PARTICLE_SIZE_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(167.35, 58.158)), module, Mirage2x::PARTICLE_SHAPE_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(25.122, 61.859)), module, Mirage2x::TURBULENCE_FREQUENCY_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(81.421, 61.859)), module, Mirage2x::WARP_SHARD_ATTEN_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(125.086, 64.548)), module, Mirage2x::PARTICLE_SIZE_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(155.635, 64.548)), module, Mirage2x::PARTICLE_SHAPE_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(43.629, 65.611)), module, Mirage2x::TURBULENCE_Y_SCALE_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(99.928, 65.611)), module, Mirage2x::WARP_Y_EULER_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(13.406, 68.249)), module, Mirage2x::TURBULENCE_FREQUENCY_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(69.705, 68.249)), module, Mirage2x::WARP_SHARD_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(38.437, 75.056)), module, Mirage2x::TURBULENCE_Y_SCALE_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(94.736, 75.056)), module, Mirage2x::WARP_Y_EULER_ATTEN_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(122.705, 83.671)), module, Mirage2x::POSITION_X_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(142.297, 83.671)), module, Mirage2x::POSITION_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(161.889, 83.671)), module, Mirage2x::POSITION_Z_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(15.61, 95.116)), module, Mirage2x::TEXTURE_SELECT_A_ATTEN_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(97.895, 95.116)), module, Mirage2x::TEXTURE_SELECT_B_ATTEN_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(122.561, 99.851)), module, Mirage2x::ROTATION_X_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(142.153, 99.851)), module, Mirage2x::ROTATION_Y_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(161.745, 99.851)), module, Mirage2x::ROTATION_Z_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(27.325, 101.506)), module, Mirage2x::TEXTURE_SELECT_A_PARAM));
+		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(86.18, 101.506)), module, Mirage2x::TEXTURE_SELECT_B_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(122.561, 116.173)), module, Mirage2x::GAIN_RED_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(142.153, 116.173)), module, Mirage2x::GAIN_GREEN_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(161.745, 116.173)), module, Mirage2x::GAIN_BLUE_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(35.848, 117.231)), module, Mirage2x::TEXTURE_SCALE_PARAM));
+		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(25.135, 117.537)), module, Mirage2x::TEXTURE_SCALE_ATTEN_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(101.077, 42.375)), module, Mirage2x::WARP_DISTANCE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.012, 44.491)), module, Mirage2x::TURBULENCE_AMOUNT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.985, 45.165)), module, Mirage2x::TURBULENCE_FREQUENCY_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(119.684, 47.045)), module, Mirage2x::LENGTH_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(101.077, 66.475)), module, Mirage2x::WARP_SHARD_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.219, 70.613)), module, Mirage2x::TURBULENCE_X_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.595, 70.613)), module, Mirage2x::TURBULENCE_Y_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(54.593, 70.613)), module, Mirage2x::TURBULENCE_Z_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(119.684, 71.146)), module, Mirage2x::WARP_Y_EULER_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(120.858, 98.549)), module, Mirage2x::GLOW_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.488, 105.759)), module, Mirage2x::TEXTURE_SELECT_A_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(91.376, 105.759)), module, Mirage2x::TEXTURE_SELECT_B_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(120.928, 118.282)), module, Mirage2x::ACTIVE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.488, 119.654)), module, Mirage2x::TEXTURE_SCALE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(91.376, 119.654)), module, Mirage2x::SIMULATION_SPEED_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(171.438, 10.44)), module, Mirage2x::ACTIVE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(140.866, 45.23)), module, Mirage2x::GLOW_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(171.414, 45.23)), module, Mirage2x::SIMULATION_SPEED_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(29.186, 46.285)), module, Mirage2x::TURBULENCE_AMOUNT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(85.485, 46.285)), module, Mirage2x::WARP_DISTANCE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(47.793, 50.956)), module, Mirage2x::TURBULENCE_X_SCALE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(104.092, 50.956)), module, Mirage2x::LENGTH_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(140.866, 66.684)), module, Mirage2x::PARTICLE_SIZE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(171.414, 66.684)), module, Mirage2x::PARTICLE_SHAPE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(29.186, 70.385)), module, Mirage2x::TURBULENCE_FREQUENCY_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(85.485, 70.385)), module, Mirage2x::WARP_SHARD_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(47.793, 75.056)), module, Mirage2x::TURBULENCE_Y_SCALE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(104.092, 75.056)), module, Mirage2x::WARP_Y_EULER_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(132.23, 83.671)), module, Mirage2x::POSITION_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(151.822, 83.671)), module, Mirage2x::POSITION_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(171.414, 83.671)), module, Mirage2x::POSITION_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(132.086, 99.851)), module, Mirage2x::ROTATION_X_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(151.678, 99.851)), module, Mirage2x::ROTATION_Y_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(171.27, 99.851)), module, Mirage2x::ROTATION_Z_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(11.546, 103.643)), module, Mirage2x::TEXTURE_SELECT_A_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(101.959, 103.643)), module, Mirage2x::TEXTURE_SELECT_B_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(132.086, 116.173)), module, Mirage2x::GAIN_RED_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(151.678, 116.173)), module, Mirage2x::GAIN_GREEN_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(171.27, 116.173)), module, Mirage2x::GAIN_BLUE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.779, 117.537)), module, Mirage2x::TEXTURE_SCALE_INPUT));
 	}
 };
 
