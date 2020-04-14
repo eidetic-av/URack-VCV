@@ -93,6 +93,12 @@
       "tags": [
         "visual"
       ]
+    },
+    {
+      "slug": "PlyPlayer",
+      "name": "PlyPlayer",
+      "description": "",
+      "tags": []
     }
   ]
 }

@@ -19,3 +19,4 @@ extern Model *modelInsider;
 extern Model *modelDayTripper;
 extern Model *modelGlowWorm;
 extern Model *modelMirage2x;
+extern Model *modelPlyPlayer;
