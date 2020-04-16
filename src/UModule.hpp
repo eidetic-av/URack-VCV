@@ -33,7 +33,7 @@ namespace URack {
             int id;
             bool connectionStatus;
             PointCloudPort* port;
-            unsigned int connectionCount;
+            std::vector<PointCloudPort*> connections;
         };
 
         std::vector<PointCloudPortInfo> pointCloudInputs;
@@ -238,35 +238,58 @@ namespace URack {
                 for (unsigned int i = 0; i < pointCloudOutputs.size(); i++) {
                     auto output = pointCloudOutputs[i];
                     auto cables = APP->scene->rack->getCablesOnPort(output.port);
-                        if (cables.size() > output.connectionCount) {
-                            // if we have connected new ports
-                            for (auto cableWidget : cables) {
-                                if (cableWidget->inputPort) {
-                                auto inputPort =
-                                    dynamic_cast<PointCloudPort*>(cableWidget->inputPort);
-                                auto module =
-                                    dynamic_cast<UModule*>(inputPort->module);
+                    if (cables.size() > output.connections.size()) {
+                        // if we have connected new ports
+                        for (auto cableWidget : cables) {
+                            // iterate through each cable and add the target port to
+                            // this port's connection list if it isn't already in there
+                            auto inputPort =
+                                dynamic_cast<PointCloudPort*>(cableWidget->inputPort);
+                            // if inputPort is null the cable is being dragged
+                            if (inputPort) {
+                                if (std::count(output.connections.begin(), output.connections.end(), inputPort))
+                                    continue;
+                                output.connections.push_back(inputPort);
+        
                                 // Dispatch connect message
+                                auto module = dynamic_cast<UModule*>(inputPort->module);
                                 std::vector<OscArg> update = {
-                                output.port->oscAddress.c_str(), module->id,
-                                inputPort->oscAddress.c_str()};
+                                    output.port->oscAddress.c_str(), module->id,
+                                    inputPort->oscAddress.c_str()
+                                };
                                 std::string address = instanceAddress + "/Connect";
                                 URack::Dispatcher::send(activeHosts, address, update);
+                            }
+                        }
+                    } else if (cables.size() < output.connections.size()) {
+                        // if the connection is no longer connected by a cable, remove it
+                        std::vector<PointCloudPort*> disconnectList;
+                        for (auto target : output.connections) {
+                            bool stillConnected = false;
+                            for (auto cableWidget : cables) {
+                                auto inputPort = dynamic_cast<PointCloudPort*>(cableWidget->inputPort);
+                                if (inputPort == target) {
+                                    stillConnected = true;
+                                    break;
                                 }
                             }
-                        } else if (cables.size() < output.connectionCount) {
-                            // if we have removed connections
-                            // std::vector<OscArg> update = {
-                            // connection.port->oscAddress.c_str()};
-                            // std::string address =
-                                // instanceAddress + "/Disconnect";
-                            // URack::Dispatcher::send(activeHosts, address, update);
+                            if (!stillConnected) disconnectList.push_back(target);
                         }
-                    output.connectionCount = cables.size();
+        
+                        for (auto target : disconnectList) {
+                            // remove the target from the output.connections list
+                            output.connections.erase(std::remove(output.connections.begin(), output.connections.end(), target), output.connections.end());
+                            // and dispatch a disconnect message
+                            auto targetModule = dynamic_cast<UModule*>(target->module);
+                            std::vector<OscArg> update = { output.port->oscAddress.c_str(), targetModule->id, target->oscAddress.c_str() };
+                            std::string address = instanceAddress + "/Disconnect";
+                            URack::Dispatcher::send(activeHosts, address, update);
+                        }
+                    }
                     pointCloudOutputs[i] = output;
+                }
+                updateTimer -= OSC_UPDATE_PERIOD;
             }
-            updateTimer -= OSC_UPDATE_PERIOD;
-        }
         }
         
 
@@ -313,7 +336,7 @@ namespace URack {
             addInput(port);
             port->type = PointCloudPort::INPUT;
             port->oscAddress = oscAddress;
-            if (module) module->pointCloudInputs.push_back({inputId, false, port, 0});
+            if (module) module->pointCloudInputs.push_back({inputId, false, port, std::vector<PointCloudPort*> {}});
         }
 
         void addPointCloudOutput(math::Vec pos, UModule* module, int outputId,
@@ -323,7 +346,7 @@ namespace URack {
             port->type = PointCloudPort::OUTPUT;
             port->oscAddress = oscAddress;
             if (module)
-                module->pointCloudOutputs.push_back({outputId, false, port, 0});
+                module->pointCloudOutputs.push_back({outputId, false, port, std::vector<PointCloudPort*> {}});
         }
 
         struct HostMenuItem : MenuItem {
