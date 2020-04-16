@@ -10,11 +10,13 @@ struct Billboard : URack::UModule {
 		LIFE_ATTEN_PARAM,
 		SPAWN_RATE_ATTEN_PARAM,
 		SIZE_ATTEN_PARAM,
-		FUZZ_PARAM,
+		GLOW_PARAM,
+		GAIN_PARAM,
 		TURBULENCE_DELAY_PARAM,
 		TURBULENCE_SCALE_PARAM,
 		TURBULENCE_PARAM,
-		GLOW_PARAM,
+		FUZZ_PARAM,
+		TINT_PARAM,
 		TURBULENCE_ATTEN_PARAM,
 		FORCE_Y_PARAM,
 		FORCE_Z_PARAM,
@@ -28,13 +30,15 @@ struct Billboard : URack::UModule {
 		LIFE_INPUT,
 		SPAWN_RATE_INPUT,
 		SIZE_INPUT,
-		FUZZ_INPUT,
 		GLOW_INPUT,
+		GAIN_INPUT,
+		FUZZ_INPUT,
+		TINT_INPUT,
 		TURBULENCE_DELAY_INPUT,
 		TURBULENCE_SCALE_INPUT,
 		TURBULENCE_INPUT,
-		ACTIVE_INPUT,
 		POINT_CLOUD_INPUT,
+		ACTIVE_INPUT,
 		FORCE_X_INPUT,
 		FORCE_Y_INPUT,
 		FORCE_Z_INPUT,
@@ -56,11 +60,13 @@ struct Billboard : URack::UModule {
 		configUpdate("Life", LIFE_PARAM, LIFE_INPUT, LIFE_ATTEN_PARAM, 0.f);
 		configUpdate("SpawnRate", SPAWN_RATE_PARAM, SPAWN_RATE_INPUT, SPAWN_RATE_ATTEN_PARAM, 0.f);
 		configUpdate("Size", SIZE_PARAM, SIZE_INPUT, SIZE_ATTEN_PARAM, 0.f);
-		configUpdate("Fuzz", FUZZ_PARAM, FUZZ_INPUT);
+		configUpdate("Glow", GLOW_PARAM, GLOW_INPUT);
+		configUpdate("Gain", GAIN_PARAM, GAIN_INPUT);
 		configBiUpdate("TurbulenceDelay", TURBULENCE_DELAY_PARAM, TURBULENCE_DELAY_INPUT);
 		configUpdate("TurbulenceScale", TURBULENCE_SCALE_PARAM, TURBULENCE_SCALE_INPUT);
 		configUpdate("Turbulence", TURBULENCE_PARAM, TURBULENCE_INPUT, TURBULENCE_ATTEN_PARAM, 0.f);
-		configUpdate("Glow", GLOW_PARAM, GLOW_INPUT);
+		configUpdate("Fuzz", FUZZ_PARAM, FUZZ_INPUT);
+		configUpdate("Tint", TINT_PARAM, TINT_INPUT);
 		configBiUpdate("ForceY", FORCE_Y_PARAM, FORCE_Y_INPUT);
 		configBiUpdate("ForceZ", FORCE_Z_PARAM, FORCE_Z_INPUT);
 		configBiUpdate("ForceX", FORCE_X_PARAM, FORCE_X_INPUT);
@@ -90,35 +96,39 @@ struct BillboardWidget : URack::UModuleWidget {
 		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(32.352, 53.076)), module, Billboard::LIFE_ATTEN_PARAM));
 		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(54.938, 53.076)), module, Billboard::SPAWN_RATE_ATTEN_PARAM));
 		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(77.588, 53.076)), module, Billboard::SIZE_ATTEN_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.857, 63.831)), module, Billboard::FUZZ_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(21.857, 63.831)), module, Billboard::GLOW_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(99.812, 63.831)), module, Billboard::GAIN_PARAM));
 		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(41.116, 67.732)), module, Billboard::TURBULENCE_DELAY_PARAM));
 		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(80.545, 68.654)), module, Billboard::TURBULENCE_SCALE_PARAM));
 		addParam(createParamCentered<Davies1900hWhiteKnob>(mm2px(Vec(60.873, 71.804)), module, Billboard::TURBULENCE_PARAM));
-		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(24.162, 81.293)), module, Billboard::GLOW_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(25.22, 81.293)), module, Billboard::FUZZ_PARAM));
+		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(96.449, 81.293)), module, Billboard::TINT_PARAM));
 		addParam(createParamCentered<TrimpotGray>(mm2px(Vec(55.014, 92.764)), module, Billboard::TURBULENCE_ATTEN_PARAM));
 		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(25.581, 102.412)), module, Billboard::FORCE_Y_PARAM));
 		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(40.59, 102.412)), module, Billboard::FORCE_Z_PARAM));
 		addParam(createParamCentered<Davies1900hSmallWhiteKnob>(mm2px(Vec(10.571, 102.415)), module, Billboard::FORCE_X_PARAM));
-                addParam(createParamCentered<LEDBezel>(mm2px(Vec(54.931, 106.642)), module, Billboard::ACTIVE_PARAM));
-                addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(54.931, 106.642)), module, Billboard::ACTIVE_LIGHT));
+                addParam(createParamCentered<LEDBezel>(mm2px(Vec(55.275, 106.642)), module, Billboard::ACTIVE_PARAM));
+                addChild(createLightCentered<LEDBezelLight<RedLight>>(mm2px(Vec(55.275, 106.642)), module, Billboard::ACTIVE_LIGHT));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.394, 45.949)), module, Billboard::FADE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(102.262, 45.949)), module, Billboard::GROWTH_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(43.041, 53.076)), module, Billboard::LIFE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(65.626, 53.076)), module, Billboard::SPAWN_RATE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(88.276, 53.076)), module, Billboard::SIZE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.962, 60.126)), module, Billboard::FUZZ_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(11.267, 77.589)), module, Billboard::GLOW_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.962, 60.126)), module, Billboard::GLOW_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(112.707, 60.126)), module, Billboard::GAIN_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.325, 77.589)), module, Billboard::FUZZ_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(109.344, 77.589)), module, Billboard::TINT_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(41.116, 85.636)), module, Billboard::TURBULENCE_DELAY_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(80.545, 86.558)), module, Billboard::TURBULENCE_SCALE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(65.703, 92.764)), module, Billboard::TURBULENCE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(66.483, 106.642)), module, Billboard::ACTIVE_INPUT));
-		addPointCloudInput(mm2px(Vec(98.317, 107.999)), module, Billboard::POINT_CLOUD_INPUT, "PointCloudInput");
+		addPointCloudInput(mm2px(Vec(93.025, 105.353)), module, Billboard::POINT_CLOUD_INPUT, "PointCloudInput");
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(65.964, 106.642)), module, Billboard::ACTIVE_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.571, 120.319)), module, Billboard::FORCE_X_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(25.589, 120.321)), module, Billboard::FORCE_Y_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.598, 120.321)), module, Billboard::FORCE_Z_INPUT));
 
-		addPointCloudOutput(mm2px(Vec(112.515, 107.999)), module, Billboard::POINT_CLOUD_OUTPUT, "PointCloudOutput");
+		addPointCloudOutput(mm2px(Vec(107.223, 105.353)), module, Billboard::POINT_CLOUD_OUTPUT, "PointCloudOutput");
 	}
 };
 
