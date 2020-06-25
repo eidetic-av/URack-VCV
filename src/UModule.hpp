@@ -1,10 +1,18 @@
-#include <arpa/inet.h>
-
 #include "PointCloudPort.hpp"
 #include "URack.hpp"
 #include "dsp/digital.hpp"
 #include "plugin.hpp"
 #include "settings.hpp"
+
+#ifdef ARCH_WIN
+#if !defined _WIN32_WINNT || _WIN32_WINNT < 0x0600
+# undef _WIN32_WINNT
+# define _WIN32_WINNT 0x0600
+#endif
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#endif
 
 namespace URack {
 
