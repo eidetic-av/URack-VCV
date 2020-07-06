@@ -57,7 +57,6 @@ namespace URack {
         int active = 1;
 
         bool initialised = false;
-
         UModule() {}
 
         void configActivate(int param, int light = -1, int input = -1) {
@@ -159,12 +158,28 @@ namespace URack {
         }
 
         void forceNetworkUpdate() {
+            // force voltages to be re-loaded
             if (lastInputVoltages.size() > 0)
                 for (unsigned int i = 0; i < inputs.size(); i++)
                     lastInputVoltages[i] = -99;
             if (lastParamValues.size() > 0)
                 for (unsigned int i = 0; i < params.size(); i++)
                     lastParamValues[i] = -99;
+        }
+
+        void sendConnections() {
+            // send connected ports (useful when loading URack Player after VCV)
+            for (auto const& output : pointCloudOutputs) {
+                for (auto const& connection : output.connections){
+                    // Dispatch connect message
+                    auto module = dynamic_cast<UModule*>(connection->module);
+                    std::vector<OscArg> update = { output.port->oscAddress.c_str(),
+                                                   module->id,
+                                                   connection->oscAddress.c_str() };
+                    std::string address = instanceAddress + "/Connect";
+                    URack::Dispatcher::send(activeHosts, address, update);
+                }
+            }
         }
 
         virtual void start() {}
@@ -241,8 +256,10 @@ namespace URack {
                         lastInputVoltages[i] = voltage;
                     }
                 }
+
                 // check for new point cloud port connections,
                 // and send updates if necessary
+
                 for (unsigned int i = 0; i < pointCloudOutputs.size(); i++) {
                     auto output = pointCloudOutputs[i];
                     auto cables = APP->scene->rack->getCablesOnPort(output.port);
