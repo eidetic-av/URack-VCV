@@ -42,6 +42,7 @@ struct Mirage2x : URack::UModule {
         GAIN_BLUE_PARAM,
         TEXTURE_SCALE_PARAM,
         TEXTURE_SCALE_ATTEN_PARAM,
+        BLEND_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -71,6 +72,7 @@ struct Mirage2x : URack::UModule {
         GAIN_GREEN_INPUT,
         GAIN_BLUE_INPUT,
         TEXTURE_SCALE_INPUT,
+        BLEND_INPUT,
         NUM_INPUTS
     };
     enum OutputIds { NUM_OUTPUTS };
@@ -124,6 +126,7 @@ struct Mirage2x : URack::UModule {
         configBiUpdate("GainBlue", GAIN_BLUE_PARAM, GAIN_BLUE_INPUT);
         configUpdate("TextureScale", TEXTURE_SCALE_PARAM, TEXTURE_SCALE_INPUT,
                      TEXTURE_SCALE_ATTEN_PARAM, 5.f);
+        configUpdate("Blend", BLEND_PARAM, BLEND_INPUT, -1, 0.f);
     }
 
     void update(const ProcessArgs &args) override {}
@@ -131,8 +134,7 @@ struct Mirage2x : URack::UModule {
 
 struct Mirage2xWidget : URack::UModuleWidget {
     Mirage2xWidget(Mirage2x *module) {
-        setModule(module);
-        setPanel(APP->window->loadSvg(
+        setModule(module); setPanel(APP->window->loadSvg(
             asset::plugin(pluginInstance, "res/Mirage2x.svg")));
 
         addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
@@ -311,6 +313,9 @@ struct Mirage2xWidget : URack::UModuleWidget {
         addInput(
             createInputCentered<PJ301MPort>(mm2px(Vec(15.779, 117.537)), module,
                                             Mirage2x::TEXTURE_SCALE_INPUT));
+
+        addParam(createParamCentered<WhiteHorizontalSlider>(
+            mm2px(Vec(57.105, 104.038)), module, Mirage2x::BLEND_PARAM));
     }
 };
 
