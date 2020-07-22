@@ -5,6 +5,7 @@
 /plugin.dll
 .DS_Store
 .clangd
+.clang-format
 compile_commands.json
 .vimrc
 .ycm_extra_conf.py
