@@ -165,6 +165,8 @@ namespace URack {
             if (lastParamValues.size() > 0)
                 for (unsigned int i = 0; i < params.size(); i++)
                     lastParamValues[i] = -99;
+            // re-send active status
+            URack::Dispatcher::send(activeHosts, instanceAddress + "/Active", active);
         }
 
         void sendConnections() {
