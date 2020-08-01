@@ -1,19 +1,4 @@
-#include <thread>
-
-#include "../lib/oscpack/ip/UdpSocket.h"
-#include "../lib/oscpack/osc/OscOutboundPacketStream.h"
-#include "../lib/oscpack/osc/OscPacketListener.h"
-#include "plugin.hpp"
-
-#define LOCALHOST "127.0.0.1"
-#define SENDPORT 54321
-#define LISTENPORT 54320
-#define UDP_BUFFER_SIZE 1024
-
 namespace URack {
-
-const float EPSILON = std::numeric_limits<float>::epsilon();
-const float OSC_UPDATE_PERIOD = 0.001f;
 
 struct OscArg {
     enum type { Int, Float, String };
@@ -84,6 +69,8 @@ struct Dispatcher {
 };
 
 struct Listener {
+    static bool initialised;
+
     static std::thread oscListenerThread;
     static UdpListeningReceiveSocket *receiveSocket;
 
@@ -98,8 +85,4 @@ struct Listener {
     static void create(int listenPort = LISTENPORT);
 };
 
-struct Settings {
-    static void load();
-    static void save();
-};
 } // namespace URack

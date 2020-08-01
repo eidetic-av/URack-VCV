@@ -1,4 +1,4 @@
-#include "UModule.hpp"
+#include "urack-module.hpp"
 
 namespace URack {
 

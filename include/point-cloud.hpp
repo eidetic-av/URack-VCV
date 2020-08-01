@@ -1,7 +1,8 @@
+#include <rack.hpp>
 #include <componentlibrary.hpp>
 #include <settings.hpp>
 
-#include "plugin.hpp"
+using namespace rack;
 
 namespace URack {
 
