@@ -209,12 +209,12 @@ namespace URack {
             if (!initialised) {
                 // any initialisation that needs to happen on first process step
                 URack::Dispatcher::send(activeHosts, instanceAddress + "/Active", active);
-                if (activateParam != 0) params[activateParam].setValue(active);
+                if (activateParam != -1) params[activateParam].setValue(active);
                 start();
                 initialised = true;
             }
         
-            if (activateParam != 0) {
+            if (activateParam != -1) {
                 bool oldActive = active;
                 // if no activate input or it's not connected,
                 // use the button to determine active status
