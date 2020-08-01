@@ -60,7 +60,23 @@ namespace URack {
 
         bool initialised = false;
 
-        UModule() { }
+        UModule() {
+            // perform URack-wide initialisation if necessary
+            if (!URack::Settings::initialised) {
+                // load URack-wide settings
+                URack::Settings::load();
+                // if we didn't load any pre-existing host configurations,
+                // create one at LOCALHOST
+                if (URack::Dispatcher::sockets.size() == 0)
+                    URack::Dispatcher::connect_host();
+                // create a listener to process incoming messages if it doesn't
+                // already exist
+                if (!URack::Listener::initialised)
+                    URack::Listener::create();
+
+                URack::Settings::initialised = true;
+            }
+        }
 
         void configActivate(int param, int light = -1, int input = -1) {
             activateParam = param;
