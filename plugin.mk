@@ -1,3 +1,10 @@
+ifndef URACK_DIR
+$(error URACK_DIR is not set)
+endif
+ifndef RACK_DIR
+$(error RACK_DIR is not set)
+endif
+
 # Add URack files to the build
 SOURCES += $(wildcard $(URACK_DIR)/src/*.cpp)
 FLAGS += -I$(URACK_DIR)/include -Wfatal-errors
