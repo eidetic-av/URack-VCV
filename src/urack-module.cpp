@@ -66,5 +66,36 @@ namespace URack {
                 moduleInstance->setVoltage(outputNum, voltage);
             }
         }
+        else {
+            std::vector<int> completedResponses;
+            for (int i = 0; i < Listener::queryResponseQueue.size(); i++) {
+                auto query = queryResponseQueue[i];
+                auto queryAddress = query;
+                if (queryAddress.find(addressString) != std::string::npos) {
+                    auto arg = msg.ArgumentsBegin();
+                    int result_count = (arg++)->AsInt32();
+                    DEBUG("REMOVING ");
+                    DEBUG(std::to_string(result_count).c_str());
+                    std::vector<std::string> results;
+                    const char *result = (arg++)->AsString();
+                    results.push_back(std::string(result));
+                    // for (int r = 0; r < result_count; r++)
+                    // {
+                    //     DEBUG(std::to_string(r).c_str());
+                    //     const char *result = (arg++)->AsString();
+                    //     results.push_back(std::string(result));
+                    // }
+                    for (int rx = 0; rx < results.size(); rx++)
+                    {
+                        DEBUG(results[rx].c_str());
+                    }
+                    completedResponses.push_back(i);
+                }
+            }
+            for (int i = 0; i < completedResponses.size(); i++) {
+                int idx = completedResponses[i] - i;
+                queryResponseQueue.erase(queryResponseQueue.begin() + idx);
+            }
+        }
     };
 }  // namespace URack

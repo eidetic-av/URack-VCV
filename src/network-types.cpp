@@ -53,6 +53,8 @@ void Dispatcher::disconnect_host(int host) {}
 std::vector<OscUpdate *> Dispatcher::updateQueue;
 std::mutex updateMutex;
 
+std::vector<std::string> Listener::queryResponseQueue;
+
 void Dispatcher::send(std::vector<int> hosts, std::string address,
                       float value) {
     for (int host : hosts)
@@ -76,6 +78,21 @@ void Dispatcher::send(int hostNum, std::string address,
     update->hostNum = hostNum;
     update->address = address;
     update->args = args;
+    update->isQuery = false;
+    Dispatcher::updateQueue.push_back(update);
+}
+
+void Dispatcher::query(std::vector<int> hosts, std::string address) {
+    for (int host : hosts)
+        Dispatcher::query(host, address);
+}
+
+void Dispatcher::query(int hostNum, std::string address) {
+    std::lock_guard<std::mutex> guard(updateMutex);
+    auto update = new OscUpdate;
+    update->hostNum = hostNum;
+    update->address = address;
+    update->isQuery = true;
     Dispatcher::updateQueue.push_back(update);
 }
 
@@ -88,28 +105,43 @@ void Dispatcher::dispatchUpdates() {
         for (auto update : updateQueue) {
             auto hostNum = update->hostNum;
             auto address = update->address;
-            auto args = update->args;
 
-            char buffer[UDP_BUFFER_SIZE];
-            osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
-            p << osc::BeginMessage(address.c_str());
-            for (unsigned int i = 0; i < args.size(); i++) {
-                switch (args[i].get_type()) {
-                case OscArg::Int:
-                    p << args[i].get_int();
-                    break;
-                case OscArg::Float:
-                    p << args[i].get_float();
-                    break;
-                case OscArg::String:
-                    p << args[i].get_string();
-                    break;
+            // regular value updates
+            if (!update->isQuery) {
+                auto args = update->args;
+                char buffer[UDP_BUFFER_SIZE];
+                osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+                p << osc::BeginMessage(address.c_str());
+                for (unsigned int i = 0; i < args.size(); i++) {
+                    switch (args[i].get_type()) {
+                        case OscArg::Int:
+                            p << args[i].get_int();
+                            break;
+                        case OscArg::Float:
+                            p << args[i].get_float();
+                            break;
+                        case OscArg::String:
+                            p << args[i].get_string();
+                            break;
+                    }
                 }
+                p << osc::EndMessage;
+                if (hostNum < (int)Dispatcher::sockets.size())
+                    Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
+                                                                       p.Size());
+            } else {
+                // querys
+                char buffer[UDP_BUFFER_SIZE];
+                osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+                p << osc::BeginMessage(address.c_str());
+                p << "Query";
+                p << osc::EndMessage;
+                if (hostNum < (int)Dispatcher::sockets.size())
+                    Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
+                                                                       p.Size());
+                // and queue the callback when we receive the response
+                Listener::queryResponseQueue.push_back(address);
             }
-            p << osc::EndMessage;
-            if (hostNum < (int)Dispatcher::sockets.size())
-                Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
-                                                                   p.Size());
         }
         updateQueue.clear();
     }

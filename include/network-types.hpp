@@ -38,6 +38,7 @@ struct OscUpdate {
     int hostNum;
     std::string address;
     std::vector<OscArg> args;
+    bool isQuery;
 };
 
 struct Dispatcher {
@@ -56,6 +57,9 @@ struct Dispatcher {
     static void send(int host, std::string address, float value);
     static void send(int host, std::string address, std::vector<OscArg> args);
 
+    static void query(int host, std::string address);
+    static void query(std::vector<int> hosts, std::string address);
+
     static void dispatchUpdates();
 
     std::thread oscDispatcherThread;
@@ -73,6 +77,8 @@ struct Listener {
 
     static std::thread oscListenerThread;
     static UdpListeningReceiveSocket *receiveSocket;
+
+    static std::vector<std::string> queryResponseQueue;
 
     class PacketListener : public osc::OscPacketListener {
         virtual void
