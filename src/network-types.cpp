@@ -53,7 +53,7 @@ void Dispatcher::disconnect_host(int host) {}
 std::vector<OscUpdate *> Dispatcher::updateQueue;
 std::mutex updateMutex;
 
-std::vector<std::string> Listener::queryResponseQueue;
+std::vector<QueryResponse*> Listener::queryResponseQueue;
 
 void Dispatcher::send(std::vector<int> hosts, std::string address,
                       float value) {
@@ -82,17 +82,19 @@ void Dispatcher::send(int hostNum, std::string address,
     Dispatcher::updateQueue.push_back(update);
 }
 
-void Dispatcher::query(std::vector<int> hosts, std::string address) {
+void Dispatcher::query(std::vector<int> hosts, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance) {
     for (int host : hosts)
-        Dispatcher::query(host, address);
+        Dispatcher::query(host, address, functor, instance);
 }
 
-void Dispatcher::query(int hostNum, std::string address) {
+void Dispatcher::query(int hostNum, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance) {
     std::lock_guard<std::mutex> guard(updateMutex);
     auto update = new OscUpdate;
     update->hostNum = hostNum;
     update->address = address;
     update->isQuery = true;
+    update->queryFunctor = functor;
+    update->moduleInstance = instance;
     Dispatcher::updateQueue.push_back(update);
 }
 
@@ -140,7 +142,12 @@ void Dispatcher::dispatchUpdates() {
                     Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
                                                                        p.Size());
                 // and queue the callback when we receive the response
-                Listener::queryResponseQueue.push_back(address);
+                auto response = new QueryResponse;
+                response->responderIp = Dispatcher::sockets[hostNum]->ip;
+                response->address = address;
+                response->functor = update->queryFunctor;
+                response->instance = update->moduleInstance;
+                Listener::queryResponseQueue.push_back(response);
             }
         }
         updateQueue.clear();

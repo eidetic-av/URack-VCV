@@ -1,3 +1,7 @@
+#pragma once
+
+#include <functional>
+
 namespace URack {
 
 struct OscArg {
@@ -39,6 +43,8 @@ struct OscUpdate {
     std::string address;
     std::vector<OscArg> args;
     bool isQuery;
+    std::function<void(void*, std::vector<std::string>)> queryFunctor;
+    void* moduleInstance;
 };
 
 struct Dispatcher {
@@ -57,8 +63,8 @@ struct Dispatcher {
     static void send(int host, std::string address, float value);
     static void send(int host, std::string address, std::vector<OscArg> args);
 
-    static void query(int host, std::string address);
-    static void query(std::vector<int> hosts, std::string address);
+    static void query(int host, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance);
+    static void query(std::vector<int> hosts, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance);
 
     static void dispatchUpdates();
 
@@ -72,13 +78,20 @@ struct Dispatcher {
     }
 };
 
+struct QueryResponse {
+    std::string responderIp;
+    std::string address;
+    std::function<void(void*, std::vector<std::string>)> functor;
+    void* instance;
+};
+
 struct Listener {
     static bool initialised;
 
     static std::thread oscListenerThread;
     static UdpListeningReceiveSocket *receiveSocket;
 
-    static std::vector<std::string> queryResponseQueue;
+    static std::vector<QueryResponse*> queryResponseQueue;
 
     class PacketListener : public osc::OscPacketListener {
         virtual void
@@ -90,5 +103,6 @@ struct Listener {
 
     static void create(int listenPort = LISTENPORT);
 };
+
 
 } // namespace URack
