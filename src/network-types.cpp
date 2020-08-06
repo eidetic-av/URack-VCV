@@ -78,7 +78,9 @@ void Dispatcher::send(int hostNum, std::string address,
     update->hostNum = hostNum;
     update->address = address;
     update->args = args;
+    update->isValue = true;
     update->isQuery = false;
+    update->isAction = false;
     Dispatcher::updateQueue.push_back(update);
 }
 
@@ -92,9 +94,28 @@ void Dispatcher::query(int hostNum, std::string address, std::function<void(void
     auto update = new OscUpdate;
     update->hostNum = hostNum;
     update->address = address;
+    update->isValue = false;
     update->isQuery = true;
+    update->isAction = false;
     update->queryFunctor = functor;
     update->moduleInstance = instance;
+    Dispatcher::updateQueue.push_back(update);
+}
+
+void Dispatcher::action(std::vector<int> hosts, std::string address, std::string argument) {
+    for (int host : hosts)
+        Dispatcher::action(host, address, argument);
+}
+
+void Dispatcher::action(int hostNum, std::string address, std::string argument) {
+    std::lock_guard<std::mutex> guard(updateMutex);
+    auto update = new OscUpdate;
+    update->hostNum = hostNum;
+    update->address = address;
+    update->isValue = false;
+    update->isQuery = false;
+    update->isAction = true;
+    update->actionArgument = argument;
     Dispatcher::updateQueue.push_back(update);
 }
 
@@ -109,7 +130,7 @@ void Dispatcher::dispatchUpdates() {
             auto address = update->address;
 
             // regular value updates
-            if (!update->isQuery) {
+            if (update->isValue) {
                 auto args = update->args;
                 char buffer[UDP_BUFFER_SIZE];
                 osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
@@ -131,7 +152,7 @@ void Dispatcher::dispatchUpdates() {
                 if (hostNum < (int)Dispatcher::sockets.size())
                     Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
                                                                        p.Size());
-            } else {
+            } else if (update->isQuery) {
                 // querys
                 char buffer[UDP_BUFFER_SIZE];
                 osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
@@ -148,6 +169,17 @@ void Dispatcher::dispatchUpdates() {
                 response->functor = update->queryFunctor;
                 response->instance = update->moduleInstance;
                 Listener::queryResponseQueue.push_back(response);
+            } else if (update->isAction) {
+                // actions are like queries that don't wait for a response
+                char buffer[UDP_BUFFER_SIZE];
+                osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+                p << osc::BeginMessage(address.c_str());
+                p << "Action";
+                p << update->actionArgument.c_str();
+                p << osc::EndMessage;
+                if (hostNum < (int)Dispatcher::sockets.size())
+                    Dispatcher::sockets[hostNum]->transmitSocket->Send(p.Data(),
+                                                                       p.Size());
             }
         }
         updateQueue.clear();

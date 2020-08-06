@@ -41,10 +41,13 @@ struct SocketInfo {
 struct OscUpdate {
     int hostNum;
     std::string address;
+    bool isValue;
     std::vector<OscArg> args;
     bool isQuery;
     std::function<void(void*, std::vector<std::string>)> queryFunctor;
     void* moduleInstance;
+    bool isAction;
+    std::string actionArgument;
 };
 
 struct Dispatcher {
@@ -65,6 +68,9 @@ struct Dispatcher {
 
     static void query(int host, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance);
     static void query(std::vector<int> hosts, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance);
+
+    static void action(int host, std::string address, std::string argument);
+    static void action(std::vector<int> hosts, std::string address, std::string argument);
 
     static void dispatchUpdates();
 
