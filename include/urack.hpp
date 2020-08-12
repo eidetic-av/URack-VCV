@@ -7,6 +7,6 @@
 #include "../lib/oscpack/osc/OscPacketListener.h"
 
 #include "constants.hpp"
-#include "urack-settings.hpp"
 #include "network-types.hpp"
+#include "urack-settings.hpp"
 #include "urack-module.hpp"

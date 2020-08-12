@@ -1,3 +1,5 @@
+#pragma once
+
 #define LOCALHOST "127.0.0.1"
 #define SENDPORT 54321
 #define LISTENPORT 54320

@@ -1,6 +1,15 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
+#include <iterator>
+#include <mutex>
+#include <tuple>
+
+#include "constants.hpp"
+
+using namespace rack;
+using namespace rack::logger;
 
 namespace URack {
 
@@ -50,40 +59,6 @@ struct OscUpdate {
     std::string actionArgument;
 };
 
-struct Dispatcher {
-    static bool instantiated;
-
-    static std::vector<SocketInfo *> sockets;
-    static std::vector<OscUpdate *> updateQueue;
-
-    static int connect_host(std::string hostIp = LOCALHOST,
-                            int hostPort = SENDPORT);
-    static void disconnect_host(int host);
-
-    static void send(std::vector<int> hosts, std::string address, float value);
-    static void send(std::vector<int> hosts, std::string address,
-                     std::vector<OscArg> args);
-    static void send(int host, std::string address, float value);
-    static void send(int host, std::string address, std::vector<OscArg> args);
-
-    static void query(int host, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance);
-    static void query(std::vector<int> hosts, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance);
-
-    static void action(int host, std::string address, std::string argument);
-    static void action(std::vector<int> hosts, std::string address, std::string argument);
-
-    static void dispatchUpdates();
-
-    std::thread oscDispatcherThread;
-
-    Dispatcher() {
-        // start the osc update thread
-        oscDispatcherThread = std::thread(&dispatchUpdates);
-        oscDispatcherThread.detach();
-        instantiated = true;
-    }
-};
-
 struct QueryResponse {
     std::string responderIp;
     std::string address;
@@ -91,24 +66,204 @@ struct QueryResponse {
     void* instance;
 };
 
-struct Listener {
-    static bool initialised;
+struct Dispatcher {
+    std::vector<SocketInfo *> sockets;
+    std::vector<OscUpdate *> updateQueue;
 
-    static std::thread oscListenerThread;
-    static UdpListeningReceiveSocket *receiveSocket;
+    std::mutex updateMutex;
 
-    static std::vector<QueryResponse*> queryResponseQueue;
+    std::vector<QueryResponse*>* queryResponseQueue;
 
-    class PacketListener : public osc::OscPacketListener {
-        virtual void
-        ProcessMessage(const osc::ReceivedMessage &msg,
-                       const IpEndpointName &remoteEndpoint) override;
-    };
+    int connect_host(std::string hostIp = LOCALHOST, int hostPort = SENDPORT) {
+        int index = sockets.size();
 
-    static PacketListener *oscPacketListener;
+        auto socketInfo = new SocketInfo;
+        socketInfo->transmitSocket =
+            new UdpTransmitSocket(IpEndpointName(hostIp.c_str(), hostPort));
+        socketInfo->ip = hostIp;
+        socketInfo->port = hostPort;
+        socketInfo->hostNum = index;
 
-    static void create(int listenPort = LISTENPORT);
+        sockets.push_back(socketInfo);
+
+        char buffer[UDP_BUFFER_SIZE];
+        osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+        p << osc::BeginMessage("/Dispatcher/Create") << hostIp.c_str() << hostPort
+          << osc::EndMessage;
+        sockets[index]->transmitSocket->Send(p.Data(), p.Size());
+
+        std::string msg = "Added host entry " + std::to_string(index) + " at ";
+        msg += hostIp;
+        msg += ":";
+        msg += std::to_string(hostPort);
+        DEBUG("%s", msg.c_str());
+
+        return index;
+    }
+
+    void send(std::vector<int> hosts, std::string address, float value) {
+        for (int host : hosts)
+            send(host, address, value);
+    }
+
+    void send(std::vector<int> hosts, std::string address, std::vector<OscArg> value) {
+        for (int host : hosts)
+            send(host, address, value);
+    }
+
+    void send(int hostNum, std::string address, float value) {
+        send(hostNum, address, std::vector<OscArg>{value});
+    }
+
+    void send(int hostNum, std::string address, std::vector<OscArg> args) {
+        std::lock_guard<std::mutex> guard(updateMutex);
+        auto update = new OscUpdate;
+        update->hostNum = hostNum;
+        update->address = address;
+        update->args = args;
+        update->isValue = true;
+        update->isQuery = false;
+        update->isAction = false;
+        updateQueue.push_back(update);
+    }
+
+    void query(std::vector<int> hosts, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance) {
+        for (int host : hosts)
+            query(host, address, functor, instance);
+    }
+
+    void query(int hostNum, std::string address, std::function<void(void*, std::vector<std::string>)> functor, void* instance) {
+        std::lock_guard<std::mutex> guard(updateMutex);
+        auto update = new OscUpdate;
+        update->hostNum = hostNum;
+        update->address = address;
+        update->isValue = false;
+        update->isQuery = true;
+        update->isAction = false;
+        update->queryFunctor = functor;
+        update->moduleInstance = instance;
+        updateQueue.push_back(update);
+    }
+
+    void action(std::vector<int> hosts, std::string address, std::string argument) {
+        for (int host : hosts)
+            action(host, address, argument);
+    }
+
+    void action(int hostNum, std::string address, std::string argument) {
+        std::lock_guard<std::mutex> guard(updateMutex);
+        auto update = new OscUpdate;
+        update->hostNum = hostNum;
+        update->address = address;
+        update->isValue = false;
+        update->isQuery = false;
+        update->isAction = true;
+        update->actionArgument = argument;
+        updateQueue.push_back(update);
+    }
+
+    static void dispatchUpdates(Dispatcher* dispatcher) {
+        while (true) {
+            // send OSC updates at 1000Hz
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::lock_guard<std::mutex> guard(dispatcher->updateMutex);
+
+            for (auto update : dispatcher->updateQueue) {
+                auto hostNum = update->hostNum;
+                auto address = update->address;
+
+                // regular value updates
+                if (update->isValue) {
+                    auto args = update->args;
+                    char buffer[UDP_BUFFER_SIZE];
+                    osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+                    p << osc::BeginMessage(address.c_str());
+                    for (unsigned int i = 0; i < args.size(); i++) {
+                        switch (args[i].get_type()) {
+                            case OscArg::Int:
+                                p << args[i].get_int();
+                                break;
+                            case OscArg::Float:
+                                p << args[i].get_float();
+                                break;
+                            case OscArg::String:
+                                p << args[i].get_string();
+                                break;
+                        }
+                    }
+                    p << osc::EndMessage;
+                    if (hostNum < (int)dispatcher->sockets.size())
+                        dispatcher->sockets[hostNum]->transmitSocket->Send(p.Data(), p.Size());
+
+                } else if (update->isQuery) {
+                    // querys
+                    char buffer[UDP_BUFFER_SIZE];
+                    osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+                    p << osc::BeginMessage(address.c_str());
+                    p << "Query";
+                    p << osc::EndMessage;
+                    if (hostNum < (int)dispatcher->sockets.size())
+                        dispatcher->sockets[hostNum]->transmitSocket->Send(p.Data(), p.Size());
+                    // and queue the callback when we receive the response
+                    auto response = new QueryResponse;
+                    response->responderIp = dispatcher->sockets[hostNum]->ip;
+                    response->address = address;
+                    response->functor = update->queryFunctor;
+                    response->instance = update->moduleInstance;
+                    dispatcher->queryResponseQueue->push_back(response);
+                } else if (update->isAction) {
+                    // actions are like queries that don't wait for a response
+                    char buffer[UDP_BUFFER_SIZE];
+                    osc::OutboundPacketStream p(buffer, UDP_BUFFER_SIZE);
+                    p << osc::BeginMessage(address.c_str());
+                    p << "Action";
+                    p << update->actionArgument.c_str();
+                    p << osc::EndMessage;
+                    if (hostNum < (int)dispatcher->sockets.size())
+                        dispatcher->sockets[hostNum]->transmitSocket->Send(p.Data(), p.Size());
+                }
+            }
+            dispatcher->updateQueue.clear();
+        }
+    }
 };
 
+struct Listener {
+    std::vector<QueryResponse*>* queryResponseQueue;
+
+    class PacketListener : public osc::OscPacketListener {
+            virtual void ProcessMessage(const osc::ReceivedMessage &msg,
+                                        const IpEndpointName &remoteEndpoint) override;
+    };
+};
+
+struct NetworkManager {
+    Dispatcher *dispatcher;
+    Listener *listener;
+    std::thread dispatcherThread;
+    std::thread listenerThread;
+    bool initialised = false;
+
+    std::vector<QueryResponse*> queryResponseQueue;
+
+    NetworkManager() {
+        //start the osc update thread
+        dispatcher = new Dispatcher;
+        dispatcher->queryResponseQueue = &queryResponseQueue;
+        dispatcherThread = std::thread(&Dispatcher::dispatchUpdates, dispatcher);
+        dispatcherThread.detach();
+        // start the listener thread
+        listener = new Listener;
+        listener->queryResponseQueue = &queryResponseQueue;
+        auto oscPacketListener = new Listener::PacketListener();
+        auto receiveSocket = new UdpListeningReceiveSocket(
+            IpEndpointName(IpEndpointName::ANY_ADDRESS, LISTENPORT), oscPacketListener);
+        listenerThread = std::thread(&UdpListeningReceiveSocket::Run, receiveSocket);
+        listenerThread.detach();
+        initialised = true;
+    }
+};
+
+extern NetworkManager* networkManager;
 
 } // namespace URack
