@@ -234,7 +234,7 @@ def components_to_source(components, slug):
 	identifier = str_to_identifier(slug)
 	source = ""
 
-	source += f"""#include "UModule.hpp"
+	source += f"""#include "plugin.hpp"
 
 struct {identifier} : URack::UModule {{"""
 
