@@ -7,9 +7,9 @@ using namespace rack;
 namespace URack {
 
 struct PointCloudCableWidget : app::CableWidget {
+
     static void drawCable(NVGcontext *vg, math::Vec pos1, math::Vec pos2,
-                          NVGcolor color, float thickness, float tension,
-                          float opacity) {
+                          NVGcolor color, float thickness, float tension, float opacity) {
         NVGcolor colorShadow = nvgRGBAf(0, 0, 0, 0.10);
         NVGcolor colorOutline = nvgLerpRGBA(color, nvgRGBf(0.0, 0.0, 0.0), 0.5);
 
@@ -107,33 +107,30 @@ struct PointCloudPort : app::SvgPort {
     }
 
     void onDragStart(const event::DragStart &e) override {
-        if (e.button != GLFW_MOUSE_BUTTON_LEFT)
-            return;
+        if (e.button != GLFW_MOUSE_BUTTON_LEFT) return;
 
         CableWidget *cw = NULL;
-
         cw = APP->scene->rack->getTopCable(this);
-        if (cw) {
-            // history::CableRemove
+
+        // Create a new cable if there aren't any on the port already
+        // Or create a cable if CTRL is held
+        if (!cw || (APP->window->getMods() & RACK_MOD_MASK) == RACK_MOD_CTRL) {
+            cw = new PointCloudCableWidget;
+            if (type == OUTPUT) cw->setOutput(this);
+            else cw->setInput(this);
+        } else {
+            // otherwise, grab the cable to drag around
             history::CableRemove *h = new history::CableRemove;
             h->setCable(cw);
             APP->history->push(h);
 
-            // Disconnect already existing cable
+            // Disconnect and reuse existing cable
             APP->scene->rack->removeCable(cw);
             if (type == OUTPUT)
                 cw->setOutput(NULL);
             else
                 cw->setInput(NULL);
         }
-
-        // Create a new cable
-        cw = new PointCloudCableWidget;
-        if (type == OUTPUT)
-            cw->setOutput(this);
-        else
-            cw->setInput(this);
-
         APP->scene->rack->setIncompleteCable(cw);
     };
 
