@@ -87,10 +87,12 @@ struct PointCloudCableWidget : app::CableWidget {
         drawCable(args.vg, outputPos, inputPos, color, thickness, tension,
                   opacity);
     }
+
 };
 
 struct PointCloudPort : app::SvgPort {
     std::string oscAddress;
+    bool initialised = false;
 
     PointCloudPort() {
         setSvg(APP->window->loadSvg(
@@ -100,10 +102,41 @@ struct PointCloudPort : app::SvgPort {
     void draw(const DrawArgs &args) override {
         CableWidget *cw = APP->scene->rack->incompleteCable;
         if (cw) {
+            // draw inclomplete Point Cloud cables with half alpha
             if (!dynamic_cast<PointCloudCableWidget *>(cw))
                 nvgGlobalAlpha(args.vg, 0.5);
         }
-        Widget::draw(args);
+        app::SvgPort::draw(args);
+    }
+
+    void step() override {
+        app::SvgPort::step();
+        if (!module) return;
+        if (initialised) return;
+        // perform initialisation here because we don't get access to inner
+        // callbacks
+        if (type == OUTPUT) {
+            // if the port is connected on load, it means it was loaded from
+            // Json, and it has been automatically connected with a regular
+            // cable. We need to replace cables with a PointCloudCable type.
+            CableWidget *cw = NULL;
+            std::vector<std::tuple<rack::app::PortWidget*, NVGcolor>> connections;
+            // first remove all connected cables, taking note of which input
+            // port they're connected to, and the serialised cable colour
+            while ((cw = APP->scene->rack->getTopCable(this))){
+                connections.push_back(std::make_tuple(cw->inputPort, cw->color));
+                APP->scene->rack->removeCable(cw);
+            }
+            // and re-connect to those ports with the proper cable type
+            for (auto connection : connections) {
+               cw = new PointCloudCableWidget;
+               cw->setOutput(this);
+               cw->setInput(std::get<0>(connection));
+               cw->color = std::get<1>(connection);
+               APP->scene->rack->addCable(cw);
+            }
+        }
+        initialised = true;
     }
 
     void onDragStart(const event::DragStart &e) override {
