@@ -1,5 +1,5 @@
-#include <rack.hpp>
 #include <componentlibrary.hpp>
+#include <rack.hpp>
 #include <settings.hpp>
 
 using namespace rack;
@@ -9,7 +9,8 @@ namespace URack {
 struct PointCloudCableWidget : app::CableWidget {
 
     static void drawCable(NVGcontext *vg, math::Vec pos1, math::Vec pos2,
-                          NVGcolor color, float thickness, float tension, float opacity) {
+                          NVGcolor color, float thickness, float tension,
+                          float opacity) {
         NVGcolor colorShadow = nvgRGBAf(0, 0, 0, 0.10);
         NVGcolor colorOutline = nvgLerpRGBA(color, nvgRGBf(0.0, 0.0, 0.0), 0.5);
 
@@ -87,7 +88,6 @@ struct PointCloudCableWidget : app::CableWidget {
         drawCable(args.vg, outputPos, inputPos, color, thickness, tension,
                   opacity);
     }
-
 };
 
 struct PointCloudPort : app::SvgPort {
@@ -111,8 +111,10 @@ struct PointCloudPort : app::SvgPort {
 
     void step() override {
         app::SvgPort::step();
-        if (!module) return;
-        if (initialised) return;
+        if (!module)
+            return;
+        if (initialised)
+            return;
         // perform initialisation here because we don't get access to inner
         // callbacks
         if (type == OUTPUT) {
@@ -120,37 +122,63 @@ struct PointCloudPort : app::SvgPort {
             // Json, and it has been automatically connected with a regular
             // cable. We need to replace cables with a PointCloudCable type.
             CableWidget *cw = NULL;
-            std::vector<std::tuple<rack::app::PortWidget*, NVGcolor>> connections;
+            std::vector<std::tuple<rack::app::PortWidget *, NVGcolor>>
+                connections;
             // first remove all connected cables, taking note of which input
             // port they're connected to, and the serialised cable colour
-            while ((cw = APP->scene->rack->getTopCable(this))){
-                connections.push_back(std::make_tuple(cw->inputPort, cw->color));
+            while ((cw = APP->scene->rack->getTopCable(this))) {
+                connections.push_back(
+                    std::make_tuple(cw->inputPort, cw->color));
                 APP->scene->rack->removeCable(cw);
             }
             // and re-connect to those ports with the proper cable type
             for (auto connection : connections) {
-               cw = new PointCloudCableWidget;
-               cw->setOutput(this);
-               cw->setInput(std::get<0>(connection));
-               cw->color = std::get<1>(connection);
-               APP->scene->rack->addCable(cw);
+                cw = new PointCloudCableWidget;
+                cw->setOutput(this);
+                cw->setInput(std::get<0>(connection));
+                cw->color = std::get<1>(connection);
+                APP->scene->rack->addCable(cw);
             }
         }
         initialised = true;
     }
 
     void onDragStart(const event::DragStart &e) override {
-        if (e.button != GLFW_MOUSE_BUTTON_LEFT) return;
+        if (e.button != GLFW_MOUSE_BUTTON_LEFT)
+            return;
 
         CableWidget *cw = NULL;
         cw = APP->scene->rack->getTopCable(this);
+
+        // alt+click cycles cable color
+        if (cw && (APP->window->getMods() & RACK_MOD_MASK) == GLFW_MOD_ALT) {
+            if (!settings::cableColors.empty()) {
+                auto colorValue = cw->color.rgba;
+                int colorId = -1;
+                for (int id = 0; id < settings::cableColors.size(); id++){
+                    auto checkValue = settings::cableColors[id].rgba;
+                    if (colorValue[0] != checkValue[0]) continue;
+                    if (colorValue[1] != checkValue[1]) continue;
+                    if (colorValue[2] != checkValue[2]) continue;
+                    if (colorValue[3] != checkValue[3]) continue;
+                    colorId = id;
+                    break;
+                }
+                int newId = colorId + 1;
+                newId %= settings::cableColors.size();
+                cw->color = settings::cableColors[newId];
+            }
+            return;
+        }
 
         // Create a new cable if there aren't any on the port already
         // Or create a cable if CTRL is held
         if (!cw || (APP->window->getMods() & RACK_MOD_MASK) == RACK_MOD_CTRL) {
             cw = new PointCloudCableWidget;
-            if (type == OUTPUT) cw->setOutput(this);
-            else cw->setInput(this);
+            if (type == OUTPUT)
+                cw->setOutput(this);
+            else
+                cw->setInput(this);
         } else {
             // otherwise, grab the cable to drag around
             history::CableRemove *h = new history::CableRemove;
