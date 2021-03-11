@@ -10,6 +10,7 @@ SOURCES += $(wildcard $(URACK_DIR)/src/*.cpp)
 FLAGS += -I$(URACK_DIR)/include -Wfatal-errors
 
 # Add OSC lib src
+# TODO this could probably be linked statically
 SOURCES += $(wildcard $(URACK_DIR)/lib/oscpack/ip/*.cpp)
 SOURCES += $(wildcard $(URACK_DIR)/lib/oscpack/osc/*.cpp)
 
